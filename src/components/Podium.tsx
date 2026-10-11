@@ -85,11 +85,11 @@ export const Podium: React.FC<PodiumProps> = ({ teams, onSelectTeam }) => {
             </div>
           </div>
 
-          {/* Alive / Eliminated Pill */}
+          {/* Roster Pill */}
           <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
             <span>Roster: {team.members.length} players</span>
-            <span className={`font-medium ${team.eliminatedCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {team.aliveCount} Alive {team.eliminatedCount > 0 && `(${team.eliminatedCount} Dead)`}
+            <span className="font-medium text-emerald-400">
+              Active Squad
             </span>
           </div>
         </div>

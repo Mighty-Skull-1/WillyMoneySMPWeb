@@ -76,11 +76,6 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
                       <div>
                         <div className="font-black text-white group-hover:text-amber-400 transition-colors flex items-center gap-2">
                           {team.name}
-                          {team.eliminatedCount === team.members.length && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-900/60 text-rose-300 border border-rose-700 font-bold">
-                              ELIMINATED
-                            </span>
-                          )}
                         </div>
                         <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                           <span>Capt: <strong className="text-slate-300">{team.captainName}</strong></span>
@@ -91,12 +86,8 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
 
                   {/* Roster Status */}
                   <td className="py-4 px-4 text-center">
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-950/60 border border-slate-800 text-xs font-semibold">
-                      <span className="text-emerald-400 font-bold">{team.aliveCount} Alive</span>
-                      <span className="text-slate-600">/</span>
-                      <span className={team.eliminatedCount > 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
-                        {team.eliminatedCount} Dead
-                      </span>
+                    <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-950/60 border border-slate-800 text-xs font-semibold">
+                      <span className="text-emerald-400 font-bold">{team.members.length} Members</span>
                     </div>
                   </td>
 

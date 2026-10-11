@@ -49,7 +49,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
               <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                 <span>Captain: <strong className="text-white">{team.captainName}</strong></span>
                 <span>•</span>
-                <span>{team.aliveCount} Alive / {team.eliminatedCount} Dead</span>
+                <span>{team.members.length} Squad Members</span>
               </p>
             </div>
           </div>
@@ -71,11 +71,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
           {team.members.map((member) => (
             <div
               key={member.uuid}
-              className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                member.isEliminated
-                  ? 'bg-rose-950/20 border-rose-900/40 opacity-70'
-                  : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700'
-              }`}
+              className="p-3.5 rounded-xl border flex items-center justify-between transition-all bg-slate-950/60 border-slate-800/80 hover:border-slate-700"
             >
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -100,15 +96,9 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
                     {getTierBadge(member.tier)}
                   </div>
                   <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                    {member.isEliminated ? (
-                      <span className="text-rose-400 font-bold flex items-center gap-1">
-                        <Skull className="w-3 h-3" /> Eliminated (Spectator)
-                      </span>
-                    ) : (
-                      <span className="text-emerald-400 font-medium flex items-center gap-1">
-                        <Heart className="w-3 h-3" /> Active Survivor
-                      </span>
-                    )}
+                    <span className="text-emerald-400 font-medium flex items-center gap-1">
+                      <Heart className="w-3 h-3" /> Active Combatant
+                    </span>
                     {member.kills !== undefined && (
                       <>
                         <span>•</span>
@@ -137,7 +127,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
 
         {/* Modal Footer / Quick Info */}
         <div className="p-4 bg-slate-950/80 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-          <span>Roster Status: <strong className="text-amber-400">{team.aliveCount} Active / {team.eliminatedCount} Spectating</strong></span>
+          <span>Squad Size: <strong className="text-amber-400">{team.members.length} Players</strong></span>
           <span className="text-slate-500">Auto-syncs with server</span>
         </div>
       </div>

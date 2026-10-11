@@ -37,29 +37,29 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ status }) => {
         </div>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="text-3xl font-black text-emerald-400">
-            {status.totalParticipants - status.eliminatedCount}
+            {status.onlinePlayers}
           </span>
-          <span className="text-xs text-slate-400">/ {status.totalParticipants}</span>
+          <span className="text-xs text-slate-400">/ {status.maxPlayers}</span>
         </div>
         <div className="mt-1 text-xs text-slate-400 font-medium">
-          Active in Arena
+          Online Right Now
         </div>
       </div>
 
-      {/* Total Eliminations */}
+      {/* Total Tournament Players */}
       <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Eliminated</span>
-          <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
-            <Skull className="w-4 h-4" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Players</span>
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+            <Users className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-3xl font-black text-rose-400">{status.eliminatedCount}</span>
-          <span className="text-xs text-slate-400">Spectators</span>
+          <span className="text-3xl font-black text-white">{status.totalParticipants}</span>
+          <span className="text-xs text-slate-400">Combatants</span>
         </div>
-        <div className="mt-1 text-xs text-rose-400/80 font-medium flex items-center gap-1">
-          Permanent Permadeath
+        <div className="mt-1 text-xs text-blue-400 font-medium flex items-center gap-1">
+          Standard Respawns
         </div>
       </div>
 
