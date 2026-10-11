@@ -13,28 +13,46 @@ import { Search, Trophy } from 'lucide-react';
 export function App() {
   const [data, setData] = useState<LeaderboardResponse>(mockLeaderboardData);
   const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('smp_api_url') || 'https://grad-controllers-ted-tower.trycloudflare.com';
+    return localStorage.getItem('smp_api_url') || 'https://ntfy.sh/willymoneysmp_leaderboard_live';
   });
   const [isLive, setIsLive] = useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Fetch from server API
+  // Fetch from server API or Cloud Relay
   const fetchLiveLeaderboard = async (urlToUse?: string) => {
     const base = urlToUse || apiUrl;
     if (!base) return;
 
     try {
-      const endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
+      let endpoint = base;
+      if (base.includes('ntfy.sh')) {
+        endpoint = base.endsWith('/json?poll=1') ? base : `${base.replace(/\/$/, '')}/json?poll=1`;
+      } else if (!base.includes('/api/leaderboard')) {
+        endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
+      }
+
       const res = await fetch(endpoint, { cache: 'no-store' });
       if (res.ok) {
-        const json: any = await res.json();
+        let json: any = null;
+        if (base.includes('ntfy.sh')) {
+          const text = await res.text();
+          const lines = text.trim().split('\n').filter(Boolean);
+          if (lines.length > 0) {
+            const lastMsg = JSON.parse(lines[lines.length - 1]);
+            if (lastMsg.message) {
+              json = JSON.parse(lastMsg.message);
+            }
+          }
+        } else {
+          json = await res.json();
+        }
+
         if (json && Array.isArray(json.teams)) {
           setData(json);
           setIsLive(true);
         } else if (Array.isArray(json)) {
-          // If server returned raw teams array, wrap in standard LeaderboardResponse
           setData((prev) => ({
             status: {
               ...prev.status,
