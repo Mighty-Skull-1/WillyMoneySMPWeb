@@ -89,14 +89,12 @@ export function App() {
   };
 
   useEffect(() => {
-    // Attempt background sync if configured
-    if (apiUrl && apiUrl !== 'http://localhost:8080') {
+    // Background live auto-sync every 5 seconds
+    fetchLiveLeaderboard();
+    const interval = setInterval(() => {
       fetchLiveLeaderboard();
-      const interval = setInterval(() => {
-        fetchLiveLeaderboard();
-      }, 10000); // 10s auto refresh
-      return () => clearInterval(interval);
-    }
+    }, 5000);
+    return () => clearInterval(interval);
   }, [apiUrl]);
 
   const handleSaveApiUrl = (newUrl: string) => {

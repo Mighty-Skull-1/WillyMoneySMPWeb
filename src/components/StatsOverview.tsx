@@ -27,10 +27,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ status }) => {
         </div>
       </div>
 
-      {/* Total Warriors Alive */}
+      {/* Online Players */}
       <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group hover:border-slate-700 transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Alive Players</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Online Players</span>
           <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
             <Users className="w-4 h-4" />
           </div>
