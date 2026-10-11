@@ -24,7 +24,7 @@ export const RulesGuide: React.FC = () => {
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Currencies & Revives
+            Currencies & Economy
           </button>
           <button
             onClick={() => setActiveTab('banned')}
@@ -71,10 +71,10 @@ export const RulesGuide: React.FC = () => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Primary Economy</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Earned from Player Kills (+10 to +25), winning KOTH (+50), opening Airdrops, and completing Bingo lines (+150). Captains can spend 150 Credits to <strong>revive eliminated teammates</strong> back to life!
+              Earned from Player Kills (+10 to +25), winning KOTH (+50), opening Airdrops, and completing Bingo lines (+150). Determines final team standings on the leaderboard!
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
-              Command: /team revive &lt;player&gt; (150 Credits)
+              Command: /leaderboard (Ranks squads by Game Credits)
             </div>
           </div>
         </div>
