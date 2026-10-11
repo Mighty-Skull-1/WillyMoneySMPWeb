@@ -6,6 +6,7 @@ interface NavbarProps {
   status: TournamentStatus | null;
   apiUrl: string;
   isLive: boolean;
+  isRefreshing?: boolean;
   onRefresh: () => void;
   onOpenSettings: () => void;
 }
@@ -13,6 +14,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   status,
   isLive,
+  isRefreshing,
   onRefresh,
   onOpenSettings,
 }) => {
@@ -104,10 +106,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => {
                 onRefresh();
               }}
-              title="Refresh Leaderboard"
-              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700/60 active:scale-95 hover:rotate-180 duration-300"
+              disabled={isRefreshing}
+              title="Refresh Leaderboard & Player Count"
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700/60 active:scale-90 disabled:opacity-60 duration-200"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-amber-400' : 'group-hover:rotate-180 transition-transform'}`} />
             </button>
 
             {/* Connection Settings */}

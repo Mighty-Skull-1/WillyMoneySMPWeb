@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Server, Wifi, Key, Check, AlertCircle } from 'lucide-react';
+import { X, Server, Wifi, Check, AlertCircle, RotateCcw } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface SettingsModalProps {
   onSaveApiUrl: (url: string) => void;
   isLive: boolean;
   onLoadDemo: () => void;
+  onResetDraft?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,8 +16,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   apiUrl,
   onSaveApiUrl,
-  isLive,
   onLoadDemo,
+  onResetDraft,
 }) => {
   const [inputUrl, setInputUrl] = useState(apiUrl);
   const [testing, setTesting] = useState(false);
@@ -28,6 +29,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTesting(true);
     setStatusMessage(null);
     try {
+      const raw = inputUrl.trim().toLowerCase();
+
+      // Check if user entered a Minecraft server domain/IP (e.g. willymoneysmp.minefort.com)
+      if (raw.includes('minefort.com') || raw.includes('37.59.210.71') || !raw.startsWith('http')) {
+        const cleanHost = raw.replace(/^https?:\/\//, '').split('/')[0].split(':')[0] || 'willymoneysmp.minefort.com';
+        const mcPing = await fetch(`https://api.mcstatus.io/v2/status/java/${cleanHost}`, { cache: 'no-store' });
+        if (mcPing.ok) {
+          const mcData = await mcPing.json();
+          if (mcData && mcData.online) {
+            setStatusMessage(`Success! Minecraft server "${cleanHost}" is Online! (${mcData.players?.online || 0}/${mcData.players?.max || 10} players active). Dual live sync enabled.`);
+            onSaveApiUrl('https://ntfy.sh/willymoneysmp_leaderboard_live');
+            return;
+          }
+        }
+      }
+
       let target = inputUrl.trim();
       if (!target.startsWith('http://') && !target.startsWith('https://')) {
         target = `https://${target}`;
@@ -47,10 +64,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       const res = await fetch(target, { cache: 'no-store' });
       if (res.ok) {
-        setStatusMessage('Success! Connected to WillyMoneySMP server.');
+        setStatusMessage('Success! Connected to WillyMoneySMP server API.');
         onSaveApiUrl(inputUrl);
       } else {
-        setStatusMessage(`Error: Server replied with status ${res.status}`);
+        setStatusMessage(`Error: Server replied with HTTP status ${res.status}`);
       }
     } catch (err: any) {
       setStatusMessage(`Connection failed: ${err.message || 'Make sure server IP and port are reachable'}`);
@@ -70,7 +87,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-black text-white">Server Connection Settings</h3>
-              <p className="text-xs text-slate-400">Configure Option 1 direct REST API sync</p>
+              <p className="text-xs text-slate-400">Real-time Minecraft Ping & Tournament Standings Sync</p>
             </div>
           </div>
           <button
@@ -85,17 +102,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase text-slate-300 mb-1.5">
-              Minecraft Server Web API Address
+              Sync Endpoint or Minecraft Server IP
             </label>
             <input
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
-              placeholder="e.g. http://your-server-ip:8080"
+              placeholder="e.g. willymoneysmp.minefort.com or https://ntfy.sh/..."
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors"
             />
+            
+            {/* Quick Presets */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <button
+                type="button"
+                onClick={() => setInputUrl('willymoneysmp.minefort.com')}
+                className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 font-mono transition-colors"
+              >
+                🎮 willymoneysmp.minefort.com
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputUrl('https://ntfy.sh/willymoneysmp_leaderboard_live')}
+                className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-400 font-mono transition-colors"
+              >
+                ☁️ Cloud Relay (ntfy.sh)
+              </button>
+            </div>
             <p className="text-[11px] text-slate-400 mt-1.5">
-              The built-in HTTP server endpoint hosted directly by the WillyMoneySMP paper plugin.
+              Dual-sync is active: player count is checked directly from the Minecraft server, and team standings sync automatically via outbound cloud relay.
             </p>
           </div>
 
@@ -126,6 +161,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {testing ? 'Testing Connection...' : 'Connect & Test API'}
             </button>
 
+            {onResetDraft && (
+              <button
+                onClick={() => {
+                  onResetDraft();
+                  onClose();
+                }}
+                title="Reset to empty Draft Phase"
+                className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-amber-500/20"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Draft
+              </button>
+            )}
+
             <button
               onClick={() => {
                 onLoadDemo();
@@ -133,16 +182,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
               className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors"
             >
-              Use Sample Data
+              Demo Data
             </button>
           </div>
         </div>
 
         {/* How it works info */}
         <div className="p-4 bg-slate-950 border-t border-slate-800 text-xs text-slate-400 space-y-1">
-          <p className="font-semibold text-slate-300">💡 How Option 1 works:</p>
+          <p className="font-semibold text-slate-300">💡 Server IP & Port Details:</p>
           <p>
-            The plugin runs a background HTTP listener inside PaperMC. When requested, it serves the current leaderboard, team rosters, and game phase as JSON without lag.
+            • Minecraft Java Address: <code className="text-amber-400 font-mono">willymoneysmp.minefort.com:25565</code>
+          </p>
+          <p>
+            • Direct IP: <code className="text-slate-300 font-mono">37.59.210.71:25565</code>
           </p>
         </div>
       </div>

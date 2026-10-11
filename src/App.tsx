@@ -10,103 +10,171 @@ import { LeaderboardResponse, TeamData } from './types/tournament';
 import { mockLeaderboardData } from './data/mockData';
 import { Search, Trophy } from 'lucide-react';
 
+const initialDraftState: LeaderboardResponse = {
+  status: {
+    serverName: "Willy Money SMP",
+    onlinePlayers: 0,
+    maxPlayers: 10,
+    phase: "DRAFT",
+    phaseName: "Draft Phase",
+    kothActive: false,
+    bingoActive: false,
+    totalTeams: 0,
+    totalParticipants: 0,
+    eliminatedCount: 0,
+    lastUpdated: new Date().toISOString(),
+  },
+  teams: [],
+};
+
 export function App() {
-  const [data, setData] = useState<LeaderboardResponse>(mockLeaderboardData);
+  const [data, setData] = useState<LeaderboardResponse>(initialDraftState);
   const [apiUrl, setApiUrl] = useState<string>(() => {
     return localStorage.getItem('smp_api_url') || 'https://ntfy.sh/willymoneysmp_leaderboard_live';
   });
   const [isLive, setIsLive] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Fetch from server API or Cloud Relay
+  // Fetch from server API or Cloud Relay with direct live Minecraft ping
   const fetchLiveLeaderboard = async (urlToUse?: string) => {
     const base = urlToUse || apiUrl;
-    if (!base) return;
+
+    // 1. Live server ping directly via Minecraft protocol query
+    let mcOnline: number | null = null;
+    let mcMax: number | null = null;
+    let mcServerOnline = false;
 
     try {
-      let endpoint = base;
-      if (base.includes('ntfy.sh')) {
-        endpoint = base.endsWith('/json?poll=1') ? base : `${base.replace(/\/$/, '')}/json?poll=1`;
-      } else if (!base.includes('/api/leaderboard')) {
-        endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
-      }
-
-      const res = await fetch(endpoint, { cache: 'no-store' });
-      if (res.ok) {
-        let json: any = null;
-        if (base.includes('ntfy.sh')) {
-          const text = await res.text();
-          const lines = text.trim().split('\n').filter(Boolean);
-          for (let i = lines.length - 1; i >= 0; i--) {
-            try {
-              const item = JSON.parse(lines[i]);
-              if (item.message) {
-                const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
-                if (parsed && (parsed.teams || Array.isArray(parsed))) {
-                  json = parsed;
-                  break;
-                }
-              }
-            } catch (err) {
-              // skip non-json message line
-            }
+      const mcPing = await fetch('https://api.mcstatus.io/v2/status/java/willymoneysmp.minefort.com', { cache: 'no-store' });
+      if (mcPing.ok) {
+        const mcData = await mcPing.json();
+        if (mcData) {
+          mcServerOnline = !!mcData.online;
+          if (mcData.players) {
+            mcOnline = mcData.players.online ?? 0;
+            mcMax = mcData.players.max ?? 10;
           }
-        } else {
-          json = await res.json();
+        }
+      }
+    } catch (e) {
+      console.warn("Could not reach mcstatus.io:", e);
+    }
+
+    // 2. Fetch tournament & squads data
+    try {
+      let json: any = null;
+      if (base) {
+        let endpoint = base;
+        if (base.includes('ntfy.sh')) {
+          endpoint = base.endsWith('/json?poll=1') ? base : `${base.replace(/\/$/, '')}/json?poll=1`;
+        } else if (!base.includes('/api/leaderboard')) {
+          endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
         }
 
-        if (json && Array.isArray(json.teams)) {
-          // Check live server ping for real-time online players
-          try {
-            const mcPing = await fetch('https://api.mcstatus.io/v2/status/java/willymoneysmp.minefort.com', { cache: 'no-store' });
-            if (mcPing.ok) {
-              const mcData = await mcPing.json();
-              if (mcData && mcData.players) {
-                json.status.onlinePlayers = mcData.players.online ?? json.status.onlinePlayers;
-                json.status.maxPlayers = mcData.players.max ?? json.status.maxPlayers;
+        const res = await fetch(endpoint, { cache: 'no-store' });
+        if (res.ok) {
+          if (base.includes('ntfy.sh')) {
+            const text = await res.text();
+            const lines = text.trim().split('\n').filter(Boolean);
+            for (let i = lines.length - 1; i >= 0; i--) {
+              try {
+                const item = JSON.parse(lines[i]);
+                if (item.message) {
+                  const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
+                  if (parsed && (parsed.teams || Array.isArray(parsed))) {
+                    json = parsed;
+                    break;
+                  }
+                }
+              } catch (err) {
+                // skip non-json message line
               }
             }
-          } catch (e) {
-            // keep relay status on error
+          } else {
+            json = await res.json();
           }
-          setData(json);
-          setIsLive(true);
-        } else if (Array.isArray(json)) {
-          setData((prev) => ({
-            status: {
-              ...prev.status,
-              totalTeams: json.length,
-              lastUpdated: new Date().toISOString(),
-            },
-            teams: json.map((t: any, idx: number) => ({
-              id: t.id || `team_${idx}`,
-              name: t.name || `Team ${idx + 1}`,
-              colorCode: t.color || t.colorCode || '§e',
-              hexColor: t.hexColor || '#eab308',
-              captain: t.captain || '',
-              captainName: t.captain || 'Captain',
-              totalCredits: t.credits || t.totalCredits || 0,
-              aliveCount: t.members?.filter((m: any) => !m.eliminated)?.length || 0,
-              eliminatedCount: t.members?.filter((m: any) => m.eliminated)?.length || 0,
-              members: (t.members || []).map((m: any, mIdx: number) => ({
-                uuid: m.uuid || `p_${mIdx}`,
-                name: m.name || 'Player',
-                tier: m.tier || 'C',
-                gameCredits: m.gameCredits || 0,
-                draftCredits: m.draftCredits || 0,
-                isCaptain: m.name === t.captain,
-                isEliminated: !!m.eliminated,
-              })),
+        }
+      }
+
+      if (json && Array.isArray(json.teams)) {
+        if (mcOnline !== null) {
+          json.status.onlinePlayers = mcOnline;
+          if (mcMax !== null) json.status.maxPlayers = mcMax;
+        }
+        setData(json);
+        setIsLive(true);
+      } else if (Array.isArray(json)) {
+        setData((prev) => ({
+          status: {
+            ...prev.status,
+            onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
+            maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
+            totalTeams: json.length,
+            totalParticipants: json.reduce((acc: number, t: any) => acc + (t.members?.length || 0), 0),
+            lastUpdated: new Date().toISOString(),
+          },
+          teams: json.map((t: any, idx: number) => ({
+            id: t.id || `team_${idx}`,
+            name: t.name || `Team ${idx + 1}`,
+            colorCode: t.color || t.colorCode || '§e',
+            hexColor: t.hexColor || '#eab308',
+            captain: t.captain || '',
+            captainName: t.captain || 'Captain',
+            totalCredits: t.credits || t.totalCredits || 0,
+            aliveCount: t.members?.length || 0,
+            eliminatedCount: 0,
+            members: (t.members || []).map((m: any, mIdx: number) => ({
+              uuid: m.uuid || `p_${mIdx}`,
+              name: m.name || 'Player',
+              tier: m.tier || 'C',
+              gameCredits: m.gameCredits || 0,
+              draftCredits: m.draftCredits || 0,
+              isCaptain: m.name === t.captain,
+              isEliminated: false,
             })),
-          }));
+          })),
+        }));
+        setIsLive(true);
+      } else {
+        // No squads created yet: update real-time online players in draft state
+        setData((prev) => ({
+          ...prev,
+          status: {
+            ...prev.status,
+            onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
+            maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
+            lastUpdated: new Date().toISOString(),
+          },
+        }));
+        if (mcServerOnline) {
           setIsLive(true);
         }
       }
     } catch (e) {
       console.warn("Could not fetch live API, maintaining current data view:", e);
+      if (mcOnline !== null) {
+        setData((prev) => ({
+          ...prev,
+          status: {
+            ...prev.status,
+            onlinePlayers: mcOnline!,
+            maxPlayers: mcMax ?? prev.status.maxPlayers,
+            lastUpdated: new Date().toISOString(),
+          },
+        }));
+      }
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchLiveLeaderboard();
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 500);
   };
 
   useEffect(() => {
@@ -129,6 +197,11 @@ export function App() {
     setIsLive(false);
   };
 
+  const handleResetToDraft = () => {
+    setData(initialDraftState);
+    fetchLiveLeaderboard();
+  };
+
   // Filter teams by search
   const teamsList = Array.isArray(data?.teams) ? data.teams : [];
   const filteredTeams = teamsList.filter((team) => {
@@ -144,17 +217,18 @@ export function App() {
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
       {/* Navigation */}
       <Navbar
-        status={data?.status || mockLeaderboardData.status}
+        status={data?.status || initialDraftState.status}
         apiUrl={apiUrl}
         isLive={isLive}
-        onRefresh={() => fetchLiveLeaderboard()}
+        isRefreshing={isRefreshing}
+        onRefresh={handleManualRefresh}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Top Summary Badges */}
-        <StatsOverview status={data?.status || mockLeaderboardData.status} />
+        <StatsOverview status={data?.status || initialDraftState.status} />
 
         {/* Podium for Top 3 */}
         {!searchQuery && teamsList.length >= 3 && (
@@ -212,6 +286,7 @@ export function App() {
         onSaveApiUrl={handleSaveApiUrl}
         isLive={isLive}
         onLoadDemo={handleLoadDemo}
+        onResetDraft={handleResetToDraft}
       />
     </div>
   );
