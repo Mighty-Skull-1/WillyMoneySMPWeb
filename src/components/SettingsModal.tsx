@@ -28,7 +28,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTesting(true);
     setStatusMessage(null);
     try {
-      const target = inputUrl.endsWith('/') ? `${inputUrl}api/leaderboard` : `${inputUrl}/api/leaderboard`;
+      let target = inputUrl.trim();
+      if (!target.startsWith('http://') && !target.startsWith('https://')) {
+        target = `https://${target}`;
+      }
+
+      if (target.includes('ntfy.sh')) {
+        const checkUrl = target.endsWith('/json?poll=1') ? target : `${target.replace(/\/$/, '')}/json?poll=1`;
+        const res = await fetch(checkUrl, { cache: 'no-store' });
+        if (res.ok) {
+          setStatusMessage('Success! Connected to WillyMoneySMP Cloud Relay.');
+          onSaveApiUrl(target);
+          return;
+        }
+      } else if (!target.includes('/api/leaderboard')) {
+        target = target.endsWith('/') ? `${target}api/leaderboard` : `${target}/api/leaderboard`;
+      }
+
       const res = await fetch(target, { cache: 'no-store' });
       if (res.ok) {
         setStatusMessage('Success! Connected to WillyMoneySMP server.');
