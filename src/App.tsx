@@ -13,7 +13,7 @@ import { Search, Trophy } from 'lucide-react';
 export function App() {
   const [data, setData] = useState<LeaderboardResponse>(mockLeaderboardData);
   const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('smp_api_url') || 'http://willymoney.feathermc.gg:8080';
+    return localStorage.getItem('smp_api_url') || 'https://grad-controllers-ted-tower.trycloudflare.com';
   });
   const [isLive, setIsLive] = useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
