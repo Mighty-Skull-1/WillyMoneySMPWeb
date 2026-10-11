@@ -59,7 +59,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ status }) => {
           <span className="text-xs text-slate-400">Spectators</span>
         </div>
         <div className="mt-1 text-xs text-rose-400/80 font-medium flex items-center gap-1">
-          Revivable: 150 Credits
+          Permanent Permadeath
         </div>
       </div>
 

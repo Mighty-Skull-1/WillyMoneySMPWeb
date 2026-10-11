@@ -13,29 +13,78 @@ import { Search, Trophy } from 'lucide-react';
 export function App() {
   const [data, setData] = useState<LeaderboardResponse>(mockLeaderboardData);
   const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('smp_api_url') || 'http://willymoney.feathermc.gg:8080';
+    return localStorage.getItem('smp_api_url') || 'https://ntfy.sh/willymoneysmp_leaderboard_live';
   });
   const [isLive, setIsLive] = useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Fetch from server API
+  // Fetch from server API or Cloud Relay
   const fetchLiveLeaderboard = async (urlToUse?: string) => {
     const base = urlToUse || apiUrl;
     if (!base) return;
 
     try {
-      const endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
+      let endpoint = base;
+      if (base.includes('ntfy.sh')) {
+        endpoint = base.endsWith('/json?poll=1') ? base : `${base.replace(/\/$/, '')}/json?poll=1`;
+      } else if (!base.includes('/api/leaderboard')) {
+        endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
+      }
+
       const res = await fetch(endpoint, { cache: 'no-store' });
       if (res.ok) {
-        const json: LeaderboardResponse = await res.json();
-        setData(json);
-        setIsLive(true);
+        let json: any = null;
+        if (base.includes('ntfy.sh')) {
+          const text = await res.text();
+          const lines = text.trim().split('\n').filter(Boolean);
+          if (lines.length > 0) {
+            const lastMsg = JSON.parse(lines[lines.length - 1]);
+            if (lastMsg.message) {
+              json = JSON.parse(lastMsg.message);
+            }
+          }
+        } else {
+          json = await res.json();
+        }
+
+        if (json && Array.isArray(json.teams)) {
+          setData(json);
+          setIsLive(true);
+        } else if (Array.isArray(json)) {
+          setData((prev) => ({
+            status: {
+              ...prev.status,
+              totalTeams: json.length,
+              lastUpdated: new Date().toISOString(),
+            },
+            teams: json.map((t: any, idx: number) => ({
+              id: t.id || `team_${idx}`,
+              name: t.name || `Team ${idx + 1}`,
+              colorCode: t.color || t.colorCode || '§e',
+              hexColor: t.hexColor || '#eab308',
+              captain: t.captain || '',
+              captainName: t.captain || 'Captain',
+              totalCredits: t.credits || t.totalCredits || 0,
+              aliveCount: t.members?.filter((m: any) => !m.eliminated)?.length || 0,
+              eliminatedCount: t.members?.filter((m: any) => m.eliminated)?.length || 0,
+              members: (t.members || []).map((m: any, mIdx: number) => ({
+                uuid: m.uuid || `p_${mIdx}`,
+                name: m.name || 'Player',
+                tier: m.tier || 'C',
+                gameCredits: m.gameCredits || 0,
+                draftCredits: m.draftCredits || 0,
+                isCaptain: m.name === t.captain,
+                isEliminated: !!m.eliminated,
+              })),
+            })),
+          }));
+          setIsLive(true);
+        }
       }
     } catch (e) {
       console.warn("Could not fetch live API, maintaining current data view:", e);
-      // Don't crash, leave current or demo data
     }
   };
 
@@ -62,11 +111,12 @@ export function App() {
   };
 
   // Filter teams by search
-  const filteredTeams = data.teams.filter((team) => {
-    const matchesTeam = team.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCaptain = team.captainName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMember = team.members.some((m) =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const teamsList = Array.isArray(data?.teams) ? data.teams : [];
+  const filteredTeams = teamsList.filter((team) => {
+    const matchesTeam = (team.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCaptain = (team.captainName || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesMember = (team.members || []).some((m) =>
+      (m.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
     return matchesTeam || matchesCaptain || matchesMember;
   });
@@ -75,7 +125,7 @@ export function App() {
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
       {/* Navigation */}
       <Navbar
-        status={data.status}
+        status={data?.status || mockLeaderboardData.status}
         apiUrl={apiUrl}
         isLive={isLive}
         onRefresh={() => fetchLiveLeaderboard()}
@@ -85,11 +135,11 @@ export function App() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Top Summary Badges */}
-        <StatsOverview status={data.status} />
+        <StatsOverview status={data?.status || mockLeaderboardData.status} />
 
         {/* Podium for Top 3 */}
-        {!searchQuery && data.teams.length >= 3 && (
-          <Podium teams={data.teams} onSelectTeam={(team) => setSelectedTeam(team)} />
+        {!searchQuery && teamsList.length >= 3 && (
+          <Podium teams={teamsList} onSelectTeam={(team) => setSelectedTeam(team)} />
         )}
 
         {/* Search Bar */}

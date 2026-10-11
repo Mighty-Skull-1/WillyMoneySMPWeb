@@ -137,7 +137,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
 
         {/* Modal Footer / Quick Info */}
         <div className="p-4 bg-slate-950/80 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-          <span>Captain Revive Cost: <strong className="text-amber-400">150 Game Credits</strong></span>
+          <span>Roster Status: <strong className="text-amber-400">{team.aliveCount} Active / {team.eliminatedCount} Spectating</strong></span>
           <span className="text-slate-500">Auto-syncs with server</span>
         </div>
       </div>
