@@ -28,6 +28,17 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       </div>
 
       <div className="overflow-x-auto">
+        {teams.length === 0 ? (
+          <div className="py-16 px-4 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
+              <Award className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-1">Waiting for Teams to be Drafted</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Tournament is currently in <strong>Draft Phase</strong>. Once Captains create and bid on teams using <code className="text-amber-400 font-mono bg-slate-950 px-1.5 py-0.5 rounded">/team create</code>, they will appear here live!
+            </p>
+          </div>
+        ) : (
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-800 bg-slate-950/40 text-[11px] font-black uppercase tracking-wider text-slate-400">
@@ -115,6 +126,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
             })}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );

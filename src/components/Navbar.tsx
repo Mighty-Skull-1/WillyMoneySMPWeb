@@ -101,9 +101,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Quick Refresh */}
             <button
-              onClick={onRefresh}
+              onClick={() => {
+                onRefresh();
+              }}
               title="Refresh Leaderboard"
-              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700/60"
+              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all border border-slate-700/60 active:scale-95 hover:rotate-180 duration-300"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
