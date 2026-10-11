@@ -58,6 +58,19 @@ export function App() {
         }
 
         if (json && Array.isArray(json.teams)) {
+          // Check live server ping for real-time online players
+          try {
+            const mcPing = await fetch('https://api.mcstatus.io/v2/status/java/willymoneysmp.minefort.com', { cache: 'no-store' });
+            if (mcPing.ok) {
+              const mcData = await mcPing.json();
+              if (mcData && mcData.players) {
+                json.status.onlinePlayers = mcData.players.online ?? json.status.onlinePlayers;
+                json.status.maxPlayers = mcData.players.max ?? json.status.maxPlayers;
+              }
+            }
+          } catch (e) {
+            // keep relay status on error
+          }
           setData(json);
           setIsLive(true);
         } else if (Array.isArray(json)) {
