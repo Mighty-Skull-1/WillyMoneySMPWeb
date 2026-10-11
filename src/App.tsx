@@ -39,10 +39,18 @@ export function App() {
         if (base.includes('ntfy.sh')) {
           const text = await res.text();
           const lines = text.trim().split('\n').filter(Boolean);
-          if (lines.length > 0) {
-            const lastMsg = JSON.parse(lines[lines.length - 1]);
-            if (lastMsg.message) {
-              json = JSON.parse(lastMsg.message);
+          for (let i = lines.length - 1; i >= 0; i--) {
+            try {
+              const item = JSON.parse(lines[i]);
+              if (item.message) {
+                const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
+                if (parsed && (parsed.teams || Array.isArray(parsed))) {
+                  json = parsed;
+                  break;
+                }
+              }
+            } catch (err) {
+              // skip non-json message line
             }
           }
         } else {
