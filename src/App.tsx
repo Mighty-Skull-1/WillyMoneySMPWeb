@@ -28,10 +28,21 @@ const initialDraftState: LeaderboardResponse = {
 };
 
 export function App() {
-  const [data, setData] = useState<LeaderboardResponse>(initialDraftState);
+  const [data, setData] = useState<LeaderboardResponse>(() => {
+    try {
+      const cached = localStorage.getItem('smp_last_leaderboard_data');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.teams)) return parsed;
+      }
+    } catch (e) {}
+    return initialDraftState;
+  });
+
   const [apiUrl, setApiUrl] = useState<string>(() => {
     return localStorage.getItem('smp_api_url') || 'https://ntfy.sh/willymoneysmp_leaderboard_live';
   });
+
   const [isLive, setIsLive] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
@@ -63,7 +74,7 @@ export function App() {
       console.warn("Could not reach mcstatus.io:", e);
     }
 
-    // 2. Fetch tournament & squads data
+    // 2. Poll tournament endpoint as fallback
     try {
       let json: any = null;
       if (base) {
@@ -90,7 +101,7 @@ export function App() {
                   }
                 }
               } catch (err) {
-                // skip non-json message line
+                // skip non-json
               }
             }
           } else {
@@ -105,56 +116,33 @@ export function App() {
           if (mcMax !== null) json.status.maxPlayers = mcMax;
         }
         setData(json);
-        setIsLive(true);
-      } else if (Array.isArray(json)) {
-        setData((prev) => ({
-          status: {
-            ...prev.status,
-            onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
-            maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
-            totalTeams: json.length,
-            totalParticipants: json.reduce((acc: number, t: any) => acc + (t.members?.length || 0), 0),
-            lastUpdated: new Date().toISOString(),
-          },
-          teams: json.map((t: any, idx: number) => ({
-            id: t.id || `team_${idx}`,
-            name: t.name || `Team ${idx + 1}`,
-            colorCode: t.color || t.colorCode || '§e',
-            hexColor: t.hexColor || '#eab308',
-            captain: t.captain || '',
-            captainName: t.captain || 'Captain',
-            totalCredits: t.credits || t.totalCredits || 0,
-            aliveCount: t.members?.length || 0,
-            eliminatedCount: 0,
-            members: (t.members || []).map((m: any, mIdx: number) => ({
-              uuid: m.uuid || `p_${mIdx}`,
-              name: m.name || 'Player',
-              tier: m.tier || 'C',
-              gameCredits: m.gameCredits || 0,
-              draftCredits: m.draftCredits || 0,
-              isCaptain: m.name === t.captain,
-              isEliminated: false,
-            })),
-          })),
-        }));
+        try {
+          localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(json));
+        } catch (e) {}
         setIsLive(true);
       } else {
-        // No squads created yet: update real-time online players in draft state
-        setData((prev) => ({
-          ...prev,
-          status: {
-            ...prev.status,
-            onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
-            maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
-            lastUpdated: new Date().toISOString(),
-          },
-        }));
+        // Retain squads but update online player counts
+        setData((prev) => {
+          const updated = {
+            ...prev,
+            status: {
+              ...prev.status,
+              onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
+              maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
+              lastUpdated: new Date().toISOString(),
+            },
+          };
+          try {
+            localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
         if (mcServerOnline) {
           setIsLive(true);
         }
       }
     } catch (e) {
-      console.warn("Could not fetch live API, maintaining current data view:", e);
+      console.warn("Live API fetch notice:", e);
       if (mcOnline !== null) {
         setData((prev) => ({
           ...prev,
@@ -177,13 +165,88 @@ export function App() {
     }, 500);
   };
 
+  // Broadcast team changes to the cloud relay (ntfy) so all viewers receive it in real-time
+  const handleBroadcastTeams = async (newTeams: TeamData[], phase?: string) => {
+    const updated: LeaderboardResponse = {
+      status: {
+        ...data.status,
+        phase: (phase as any) || data.status.phase || 'DRAFT',
+        totalTeams: newTeams.length,
+        totalParticipants: newTeams.reduce((acc, t) => acc + (t.members?.length || 0), 0),
+        lastUpdated: new Date().toISOString(),
+      },
+      teams: newTeams,
+    };
+
+    setData(updated);
+    try {
+      localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
+    } catch (e) {}
+
+    // Post to cloud relay
+    if (apiUrl.includes('ntfy.sh')) {
+      try {
+        const postUrl = apiUrl.replace(/\/json.*$/, '').replace(/\/sse.*$/, '').replace(/\/$/, '');
+        await fetch(postUrl, {
+          method: 'POST',
+          body: JSON.stringify(updated),
+        });
+      } catch (err) {
+        console.warn('Could not post to ntfy relay:', err);
+      }
+    }
+  };
+
   useEffect(() => {
-    // Background live auto-sync every 5 seconds
+    // 1. Initial live Minecraft ping
     fetchLiveLeaderboard();
+
+    // 2. Real-time Server-Sent Events (SSE) stream from ntfy
+    // Sub-second push notifications without 429 rate limit errors
+    let es: EventSource | null = null;
+    if (apiUrl.includes('ntfy.sh')) {
+      const sseEndpoint = `${apiUrl.replace(/\/$/, '').replace(/\/json.*$/, '').replace(/\/sse.*$/, '')}/sse?since=1h`;
+      try {
+        es = new EventSource(sseEndpoint);
+        es.onmessage = (event) => {
+          try {
+            const item = JSON.parse(event.data);
+            if (item && item.message) {
+              const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
+              if (parsed && Array.isArray(parsed.teams)) {
+                setData((prev) => {
+                  const updated: LeaderboardResponse = {
+                    ...parsed,
+                    status: {
+                      ...parsed.status,
+                      onlinePlayers: prev.status.onlinePlayers,
+                      maxPlayers: prev.status.maxPlayers,
+                    },
+                  };
+                  try {
+                    localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
+                  } catch (e) {}
+                  return updated;
+                });
+                setIsLive(true);
+              }
+            }
+          } catch (err) {}
+        };
+      } catch (err) {
+        console.warn("EventSource error:", err);
+      }
+    }
+
+    // 3. Keep online player count fresh every 15 seconds
     const interval = setInterval(() => {
       fetchLiveLeaderboard();
-    }, 5000);
-    return () => clearInterval(interval);
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      if (es) es.close();
+    };
   }, [apiUrl]);
 
   const handleSaveApiUrl = (newUrl: string) => {
@@ -199,7 +262,10 @@ export function App() {
 
   const handleResetToDraft = () => {
     setData(initialDraftState);
-    fetchLiveLeaderboard();
+    try {
+      localStorage.removeItem('smp_last_leaderboard_data');
+    } catch (e) {}
+    handleBroadcastTeams([], 'DRAFT');
   };
 
   // Filter teams by search
@@ -287,6 +353,8 @@ export function App() {
         isLive={isLive}
         onLoadDemo={handleLoadDemo}
         onResetDraft={handleResetToDraft}
+        currentTeams={data.teams}
+        onBroadcastTeams={handleBroadcastTeams}
       />
     </div>
   );
