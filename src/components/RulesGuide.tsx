@@ -76,7 +76,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Phase 1 Only</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Given to Team Captains at the start (default 400). Captains spend these in live 30-second auctions to build their rosters. Bids go up 5 at a time (5, 10, 15...) and the highest bid when the clock runs out wins.
+              Given to Team Captains at the start (default 300). Captains spend these in live 30-second auctions to build their rosters. Bids go up 5 at a time (5, 10, 15...) and the highest bid when the clock runs out wins.
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
               Command: /bid (raises the top bid by 5)
