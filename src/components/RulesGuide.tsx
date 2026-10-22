@@ -11,7 +11,12 @@ export const RulesGuide: React.FC = () => {
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-400" /> TOURNAMENT HANDBOOK & MECHANICS
           </h2>
-          <p className="text-xs text-slate-400">Essential rules, currencies, and events for Willy Money SMP</p>
+          <p className="text-xs text-slate-400">
+            Essential rules, currencies, and events for Willy Money SMP ·{' '}
+            <a href="./guide.html" className="text-amber-400 hover:text-amber-300 font-semibold">
+              Read the full tournament guide →
+            </a>
+          </p>
         </div>
 
         {/* Tab Buttons */}

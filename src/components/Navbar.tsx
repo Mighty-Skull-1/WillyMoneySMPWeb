@@ -1,6 +1,6 @@
 import React from 'react';
 import { TournamentStatus } from '../types/tournament';
-import { Shield, Swords, Flame, Trophy, Radio, RefreshCw, Clock, Gavel } from 'lucide-react';
+import { Shield, Swords, Flame, Trophy, Radio, RefreshCw, Clock, Gavel, BookOpen } from 'lucide-react';
 
 export type FeedState = 'live' | 'stale' | 'offline' | 'connecting' | 'demo';
 
@@ -137,6 +137,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-amber-400' : 'group-hover:rotate-180 transition-transform'}`} />
             </button>
+
+            {/* Tournament guide (separate page: public/guide.html) */}
+            <a
+              href="./guide.html"
+              title="Tournament Guide"
+              aria-label="Tournament Guide"
+              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 text-xs font-bold rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition-all whitespace-nowrap"
+            >
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Guide</span>
+            </a>
 
             {/* Join / server info */}
             <button
