@@ -7,6 +7,8 @@ import { TeamModal } from './components/TeamModal';
 import { ServerInfoModal, timeAgo } from './components/ServerInfoModal';
 import { DraftCenter } from './components/DraftCenter';
 import { RulesGuide } from './components/RulesGuide';
+import { AdminPasswordModal } from './components/AdminPasswordModal';
+import { isAdminUnlocked } from './lib/admin';
 import type { LeaderboardResponse } from './types/tournament';
 import { mockLeaderboardData } from './data/mockData';
 import { MC_PING_ENABLED, MC_SERVER_HOST, NTFY_TOPIC, STALE_AFTER_MS } from './config';
@@ -78,6 +80,13 @@ export function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+
+  /** The server panel is admin-only: ask for the password unless this browser is already unlocked. */
+  const openInfo = () => {
+    if (isAdminUnlocked()) setIsInfoOpen(true);
+    else setIsPasswordOpen(true);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [, setTick] = useState(0);
 
@@ -202,7 +211,7 @@ export function App() {
         draftLive={!!draft && !isDemo}
         isRefreshing={isRefreshing}
         onRefresh={handleManualRefresh}
-        onOpenInfo={() => setIsInfoOpen(true)}
+        onOpenInfo={openInfo}
       />
 
       {import.meta.env.DEV && (
@@ -291,6 +300,14 @@ export function App() {
       </footer>
 
       <TeamModal team={selectedTeam} onClose={() => setSelectedTeamId(null)} />
+      <AdminPasswordModal
+        isOpen={isPasswordOpen}
+        onClose={() => setIsPasswordOpen(false)}
+        onUnlocked={() => {
+          setIsPasswordOpen(false);
+          setIsInfoOpen(true);
+        }}
+      />
       <ServerInfoModal
         isOpen={isInfoOpen}
         onClose={() => setIsInfoOpen(false)}

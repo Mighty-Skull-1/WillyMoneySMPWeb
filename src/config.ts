@@ -29,5 +29,13 @@ export const SIGNING_PUBLIC_KEY: string =
   env.VITE_SIGNING_PUBLIC_KEY ||
   'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYepNidq0Mlf3h38SIHaj3JbcLFs3PpV6K/81XOBFbrFZHlIMYL0zkoCDR36ofm/vJwTX3ZUjo9xJC/hIbNUM2w==';
 
+/**
+ * Admin password for the "Join Server" panel. Only a salted PBKDF2-SHA256 hash is stored here.
+ * To change the password, regenerate the hash (ask Claude, or see src/lib/admin.ts).
+ */
+export const ADMIN_PASSWORD_SALT = 'wmsmp-admin-v1';
+export const ADMIN_PASSWORD_ITERATIONS = 310_000;
+export const ADMIN_PASSWORD_HASH = 'b8c00a9c6f0112f42e27015b6c9ea5c0554168043b2167ee0889cfbecb8fef8a';
+
 /** An update older than this (the plugin sends one at least every minute) means the feed is stale. */
 export const STALE_AFTER_MS = 150_000;
