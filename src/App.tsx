@@ -294,7 +294,7 @@ export function App() {
           selectedTeamId={selectedTeamId ?? undefined}
         />
 
-        <RulesGuide />
+        <RulesGuide banned={isDemo ? undefined : data.banned} />
       </main>
 
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">

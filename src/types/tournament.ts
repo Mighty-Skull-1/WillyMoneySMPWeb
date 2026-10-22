@@ -76,4 +76,12 @@ export interface LeaderboardResponse {
   history?: DraftPick[];
   /** Minecraft server address set in game with /smp setip (falls back to MC_SERVER_HOST). */
   serverAddress?: string;
+  /** Items banned on the server (/banneditems). Undefined = server hasn't sent the list. */
+  banned?: BannedItem[];
+}
+
+export interface BannedItem {
+  name: string;
+  reason: string;
+  alternative: string;
 }

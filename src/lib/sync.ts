@@ -7,6 +7,7 @@
 
 import { NTFY_SERVER, NTFY_TOPIC, SIGNING_PUBLIC_KEY } from '../config';
 import type {
+  BannedItem,
   DraftAuction,
   DraftPick,
   LeaderboardResponse,
@@ -171,6 +172,11 @@ export function decodePayload(raw: any): LeaderboardResponse {
     draft,
     pool,
     history,
+    banned: Array.isArray(raw.ban)
+      ? (raw.ban as unknown[][]).map(
+          (b): BannedItem => ({ name: String(b[0] ?? ''), reason: String(b[1] ?? ''), alternative: String(b[2] ?? '') }),
+        )
+      : undefined,
     serverAddress: typeof raw.ip === 'string' && /^[A-Za-z0-9.:-]{3,100}$/.test(raw.ip) ? raw.ip : undefined,
   };
 }

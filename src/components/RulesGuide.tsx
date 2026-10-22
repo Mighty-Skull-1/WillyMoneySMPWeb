@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
+import type { BannedItem } from '../types/tournament';
 import { Ban, Compass, Gift, Target, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-export const RulesGuide: React.FC = () => {
+// Shown until the server sends its live list (matches the plugin's default banned-items.yml).
+const DEFAULT_BANNED: BannedItem[] = [
+  { name: 'Ender Pearl', reason: 'Ender Pearls are disabled for competitive tournament balance', alternative: 'None / Standard Movement' },
+  { name: 'Wind Charge', reason: 'Wind Charges are disabled for competitive tournament balance', alternative: 'None / Standard Movement' },
+];
+
+interface RulesGuideProps {
+  /** Live list from the server (/banneditems). Undefined until the server sends it. */
+  banned?: BannedItem[];
+}
+
+export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
+  const bannedList = banned ?? DEFAULT_BANNED;
   const [activeTab, setActiveTab] = useState<'banned' | 'events' | 'currencies'>('currencies');
 
   return (
@@ -85,29 +98,32 @@ export const RulesGuide: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 2: Banned Items */}
+      {/* Tab 2: Banned Items (live from the server: /banneditems) */}
       {activeTab === 'banned' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40">
-            <div className="flex items-center gap-2 mb-2">
-              <Ban className="w-4 h-4 text-rose-400" />
-              <h4 className="font-bold text-rose-300 text-sm">Ender Pearls</h4>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              <strong>Strictly Disabled:</strong> Instant teleportation allows cheesy escapes from combat. Throwing or right-clicking is cancelled immediately and the pearl is deleted.
-            </p>
+        bannedList.length === 0 ? (
+          <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-900/40 text-sm text-emerald-200 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> No items are banned right now.
           </div>
-
-          <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40">
-            <div className="flex items-center gap-2 mb-2">
-              <Ban className="w-4 h-4 text-rose-400" />
-              <h4 className="font-bold text-rose-300 text-sm">Wind Charges</h4>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              <strong>Strictly Disabled:</strong> Burst jumping disrupts fair melee combat and terrain positioning. Projectiles are automatically cleared upon firing.
-            </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {bannedList.map((item) => (
+              <div key={item.name} className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ban className="w-4 h-4 text-rose-400" />
+                  <h4 className="font-bold text-rose-300 text-sm">{item.name}</h4>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  <strong>Banned:</strong> {item.reason || 'Not allowed in the tournament.'}
+                </p>
+                {item.alternative && (
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    <span className="font-semibold text-slate-300">Use instead:</span> {item.alternative}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+        )
       )}
 
       {/* Tab 3: Events */}
