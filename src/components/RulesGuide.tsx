@@ -76,7 +76,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">Phase 1 Only</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Given to Team Captains at the start (default 400). Captains spend these in live 15-second auctions to build their rosters. Bids go up 5 at a time (5, 10, 15...) and the highest bid when the clock runs out wins.
+              Given to Team Captains at the start (default 400). Captains spend these in live 30-second auctions to build their rosters. Bids go up 5 at a time (5, 10, 15...) and the highest bid when the clock runs out wins.
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
               Command: /bid (raises the top bid by 5)
@@ -89,7 +89,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Primary Economy</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Earned from Player Kills (+10 to +25), winning KOTH (+50), opening Airdrops, and completing Bingo lines (+150). Determines final team standings on the leaderboard!
+              Earned from Player Kills (+10 to +25), placing in KOTH (up to +100), opening Airdrops, and placing in Bingo (up to +150). Determines final team standings on the leaderboard!
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
               Command: /leaderboard (Ranks squads by Game Credits)
@@ -128,14 +128,14 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
 
       {/* Tab 3: Events */}
       {activeTab === 'events' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
             <div className="flex items-center gap-2 mb-2">
               <Target className="w-4 h-4 text-rose-400" />
               <h4 className="font-bold text-white text-sm">King of the Hill (KOTH)</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              A 5-block particle beacon zone appears for 180s. Holding the zone grants <strong>+50 Game Credits</strong> to the captain!
+              A 5-block flame ring appears for 180s. Teams that hold it longest win: <strong>1st +100</strong>, <strong>2nd +50</strong>, <strong>3rd +25</strong> Game Credits.
             </p>
           </div>
 
@@ -155,7 +155,17 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <h4 className="font-bold text-white text-sm">5x5 Lockout Bingo</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              25 survival challenges. First squad to complete an objective claims it. Finishing any 5-in-a-row line awards <strong>+150 Credits</strong>!
+              25 survival challenges, first team to finish one claims it. When bingo ends, most squares wins: <strong>+150 / +120 / +100 / +50 / +25</strong> for 1st to 5th.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <h4 className="font-bold text-white text-sm">Free Fall (Finale Showdown)</h4>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              The world border closes in, forcing every team into the middle. Being outside the border hurts. Last team standing takes the crown!
             </p>
           </div>
         </div>
