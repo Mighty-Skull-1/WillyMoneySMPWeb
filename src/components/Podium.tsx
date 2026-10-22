@@ -52,7 +52,7 @@ export const Podium: React.FC<PodiumProps> = ({ teams, onSelectTeam }) => {
           <div className="flex items-center gap-3 mb-4">
             <div className="relative">
               <img
-                src={`https://mc-heads.net/avatar/${team.captainName}/56`}
+                src={`https://mc-heads.net/avatar/${encodeURIComponent(team.captainName)}/56`}
                 alt={team.captainName}
                 className="w-14 h-14 rounded-xl border-2 border-slate-700 bg-slate-800 shadow-md transition-transform group-hover:scale-105"
                 onError={(e) => {
@@ -88,9 +88,11 @@ export const Podium: React.FC<PodiumProps> = ({ teams, onSelectTeam }) => {
           {/* Roster Pill */}
           <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
             <span>Roster: {team.members.length} players</span>
-            <span className="font-medium text-emerald-400">
-              Active Squad
-            </span>
+            {team.eliminatedCount > 0 ? (
+              <span className="font-medium text-rose-400">{team.aliveCount} alive · {team.eliminatedCount} out</span>
+            ) : (
+              <span className="font-medium text-emerald-400">All alive</span>
+            )}
           </div>
         </div>
 

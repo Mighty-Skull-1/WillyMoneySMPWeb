@@ -1,360 +1,307 @@
-import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Navbar, type FeedState } from './components/Navbar';
 import { StatsOverview } from './components/StatsOverview';
 import { Podium } from './components/Podium';
 import { LeaderboardTable } from './components/LeaderboardTable';
 import { TeamModal } from './components/TeamModal';
-import { SettingsModal } from './components/SettingsModal';
+import { ServerInfoModal, timeAgo } from './components/ServerInfoModal';
+import { DraftCenter } from './components/DraftCenter';
 import { RulesGuide } from './components/RulesGuide';
-import { LeaderboardResponse, TeamData } from './types/tournament';
+import type { LeaderboardResponse } from './types/tournament';
 import { mockLeaderboardData } from './data/mockData';
+import { MC_PING_ENABLED, MC_SERVER_HOST, NTFY_TOPIC, STALE_AFTER_MS } from './config';
+import {
+  fetchLatest,
+  pingServer,
+  sortTeams,
+  subscribe,
+  PHASE_NAMES,
+  type McStatus,
+  type SignedUpdate,
+} from './lib/sync';
 import { Search, Trophy } from 'lucide-react';
 
-const initialDraftState: LeaderboardResponse = {
+const CACHE_KEY = 'wmsmp_leaderboard_v2';
+
+const emptyState: LeaderboardResponse = {
   status: {
-    serverName: "Willy Money SMP",
+    serverName: 'Willy Money SMP',
     onlinePlayers: 0,
-    maxPlayers: 10,
-    phase: "DRAFT",
-    phaseName: "Draft Phase",
+    maxPlayers: 0,
+    phase: 'DRAFT',
+    phaseName: PHASE_NAMES.DRAFT,
     kothActive: false,
     bingoActive: false,
     totalTeams: 0,
     totalParticipants: 0,
     eliminatedCount: 0,
-    lastUpdated: new Date().toISOString(),
+    lastUpdated: new Date(0).toISOString(),
   },
   teams: [],
+  draft: null,
+  pool: [],
+  history: [],
 };
 
+function loadCache(): SignedUpdate | null {
+  try {
+    // Clear what the old version of the site stored (it wasn't signature-checked).
+    localStorage.removeItem('smp_last_leaderboard_data');
+    localStorage.removeItem('smp_api_url');
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.sentAt === 'number' && Array.isArray(parsed.data?.teams)) return parsed;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function saveCache(update: SignedUpdate) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(update));
+  } catch {
+    // ignore (private mode etc.)
+  }
+}
+
 export function App() {
-  const [data, setData] = useState<LeaderboardResponse>(() => {
-    try {
-      const cached = localStorage.getItem('smp_last_leaderboard_data');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed && Array.isArray(parsed.teams)) return parsed;
-      }
-    } catch (e) {}
-    return initialDraftState;
-  });
+  const [live, setLive] = useState<SignedUpdate | null>(() => loadCache());
+  const [isDemo, setIsDemo] = useState(false);
+  const [mcStatus, setMcStatus] = useState<McStatus | null>(null);
+  const [mcChecked, setMcChecked] = useState(false);
+  const [rejectedCount, setRejectedCount] = useState(0);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(true);
+  const [clockSkewMs, setClockSkewMs] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [, setTick] = useState(0);
 
-  const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('smp_api_url') || 'https://ntfy.sh/willymoneysmp_leaderboard_live';
-  });
+  const latestSentAt = useRef<number>(live?.sentAt ?? 0);
 
-  const [isLive, setIsLive] = useState<boolean>(false);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Fetch from server API or Cloud Relay with direct live Minecraft ping
-  const fetchLiveLeaderboard = async (urlToUse?: string) => {
-    const base = urlToUse || apiUrl;
-
-    // 1. Live server ping directly via Minecraft protocol query
-    let mcOnline: number | null = null;
-    let mcMax: number | null = null;
-    let mcServerOnline = false;
-
-    try {
-      const mcPing = await fetch('https://api.mcstatus.io/v2/status/java/willymoneysmp.minefort.com', { cache: 'no-store' });
-      if (mcPing.ok) {
-        const mcData = await mcPing.json();
-        if (mcData) {
-          mcServerOnline = !!mcData.online;
-          if (mcData.players) {
-            mcOnline = mcData.players.online ?? 0;
-            mcMax = mcData.players.max ?? 10;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Could not reach mcstatus.io:", e);
+  /** Only ever move forward in time, so replayed old messages can't roll the board back. */
+  const applyUpdate = useCallback((update: SignedUpdate, arrivedLive: boolean) => {
+    if (update.sentAt <= latestSentAt.current) return;
+    latestSentAt.current = update.sentAt;
+    if (arrivedLive) {
+      const skew = Date.now() - update.sentAt;
+      // Network delay is small; a big gap means this device's clock is off.
+      setClockSkewMs(Math.abs(skew) < 10 * 60_000 ? skew : 0);
     }
+    setLive(update);
+    saveCache(update);
+  }, []);
 
-    // 2. Poll tournament endpoint as fallback
+  const loadLatest = useCallback(async () => {
     try {
-      let json: any = null;
-      if (base) {
-        let endpoint = base;
-        if (base.includes('ntfy.sh')) {
-          endpoint = base.endsWith('/json?poll=1') ? base : `${base.replace(/\/$/, '')}/json?poll=1`;
-        } else if (!base.includes('/api/leaderboard')) {
-          endpoint = base.endsWith('/') ? `${base}api/leaderboard` : `${base}/api/leaderboard`;
-        }
-
-        const res = await fetch(endpoint, { cache: 'no-store' });
-        if (res.ok) {
-          if (base.includes('ntfy.sh')) {
-            const text = await res.text();
-            const lines = text.trim().split('\n').filter(Boolean);
-            for (let i = lines.length - 1; i >= 0; i--) {
-              try {
-                const item = JSON.parse(lines[i]);
-                if (item.message) {
-                  const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
-                  if (parsed && (parsed.teams || Array.isArray(parsed))) {
-                    json = parsed;
-                    break;
-                  }
-                }
-              } catch (err) {
-                // skip non-json
-              }
-            }
-          } else {
-            json = await res.json();
-          }
-        }
-      }
-
-      if (json && Array.isArray(json.teams)) {
-        if (mcOnline !== null) {
-          json.status.onlinePlayers = mcOnline;
-          if (mcMax !== null) json.status.maxPlayers = mcMax;
-        }
-        setData(json);
-        try {
-          localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(json));
-        } catch (e) {}
-        setIsLive(true);
-      } else {
-        // Retain squads but update online player counts
-        setData((prev) => {
-          const updated = {
-            ...prev,
-            status: {
-              ...prev.status,
-              onlinePlayers: mcOnline !== null ? mcOnline : prev.status.onlinePlayers,
-              maxPlayers: mcMax !== null ? mcMax : prev.status.maxPlayers,
-              lastUpdated: new Date().toISOString(),
-            },
-          };
-          try {
-            localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
-        });
-        if (mcServerOnline) {
-          setIsLive(true);
-        }
-      }
+      const { update, rejected } = await fetchLatest();
+      setRejectedCount((n) => Math.max(n, rejected));
+      if (update) applyUpdate(update, Date.now() - update.sentAt < 5_000);
+      setSyncError(null);
     } catch (e) {
-      console.warn("Live API fetch notice:", e);
-      if (mcOnline !== null) {
-        setData((prev) => ({
-          ...prev,
-          status: {
-            ...prev.status,
-            onlinePlayers: mcOnline!,
-            maxPlayers: mcMax ?? prev.status.maxPlayers,
-            lastUpdated: new Date().toISOString(),
-          },
-        }));
-      }
+      setSyncError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setConnecting(false);
     }
-  };
+  }, [applyUpdate]);
+
+  const refreshServerPing = useCallback(async () => {
+    if (!MC_PING_ENABLED) {
+      setMcChecked(true);
+      return;
+    }
+    const status = await pingServer(MC_SERVER_HOST);
+    if (status) setMcStatus(status);
+    setMcChecked(true);
+  }, []);
+
+  useEffect(() => {
+    loadLatest();
+    refreshServerPing();
+    const unsubscribe = subscribe(
+      (u) => applyUpdate(u, true),
+      () => setRejectedCount((n) => n + 1),
+    );
+    const pingTimer = setInterval(refreshServerPing, 30_000);
+    // Re-check the relay now and then in case the live stream dropped silently.
+    const pollTimer = setInterval(loadLatest, 120_000);
+    // Re-render every 15s so "updated x ago" and stale detection stay current.
+    const clockTimer = setInterval(() => setTick((t) => t + 1), 15_000);
+    return () => {
+      unsubscribe();
+      clearInterval(pingTimer);
+      clearInterval(pollTimer);
+      clearInterval(clockTimer);
+    };
+  }, [applyUpdate, loadLatest, refreshServerPing]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await fetchLiveLeaderboard();
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
+    await Promise.all([loadLatest(), refreshServerPing()]);
+    setIsRefreshing(false);
   };
 
-  // Broadcast team changes to the cloud relay (ntfy) so all viewers receive it in real-time
-  const handleBroadcastTeams = async (newTeams: TeamData[], phase?: string) => {
-    const updated: LeaderboardResponse = {
+  // ------------------------------------------------------------ derived view data
+
+  const data: LeaderboardResponse = useMemo(() => {
+    if (isDemo) return { ...mockLeaderboardData, teams: sortTeams(mockLeaderboardData.teams) };
+    const base = live?.data ?? emptyState;
+    if (!mcStatus) return base;
+    // The direct server ping is fresher than the last pushed snapshot for player counts.
+    return {
+      ...base,
       status: {
-        ...data.status,
-        phase: (phase as any) || data.status.phase || 'DRAFT',
-        totalTeams: newTeams.length,
-        totalParticipants: newTeams.reduce((acc, t) => acc + (t.members?.length || 0), 0),
-        lastUpdated: new Date().toISOString(),
+        ...base.status,
+        onlinePlayers: mcStatus.online ? mcStatus.players : 0,
+        maxPlayers: mcStatus.max || base.status.maxPlayers,
       },
-      teams: newTeams,
     };
+  }, [isDemo, live, mcStatus]);
 
-    setData(updated);
-    try {
-      localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
-    } catch (e) {}
+  const lastUpdateAt = live?.sentAt ?? null;
+  const isStale = !lastUpdateAt || Date.now() - clockSkewMs - lastUpdateAt > STALE_AFTER_MS;
 
-    // Post to cloud relay
-    if (apiUrl.includes('ntfy.sh')) {
-      try {
-        const postUrl = apiUrl.replace(/\/json.*$/, '').replace(/\/sse.*$/, '').replace(/\/$/, '');
-        await fetch(postUrl, {
-          method: 'POST',
-          body: JSON.stringify(updated),
-        });
-      } catch (err) {
-        console.warn('Could not post to ntfy relay:', err);
-      }
-    }
-  };
+  const feed: FeedState = isDemo
+    ? 'demo'
+    : connecting && !live
+      ? 'connecting'
+      : mcStatus && !mcStatus.online
+        ? 'offline'
+        : isStale
+          ? 'stale'
+          : 'live';
 
-  useEffect(() => {
-    // 1. Initial live Minecraft ping
-    fetchLiveLeaderboard();
+  const teams = data.teams;
+  const ranks = useMemo(() => Object.fromEntries(teams.map((t, i) => [t.id, i + 1])), [teams]);
+  const pool = data.pool ?? [];
+  const history = data.history ?? [];
+  const draft = data.draft ?? null;
+  const showDraft = !isDemo && (data.status.phase === 'DRAFT' || !!draft);
 
-    // 2. Real-time Server-Sent Events (SSE) stream from ntfy
-    // Sub-second push notifications without 429 rate limit errors
-    let es: EventSource | null = null;
-    if (apiUrl.includes('ntfy.sh')) {
-      const sseEndpoint = `${apiUrl.replace(/\/$/, '').replace(/\/json.*$/, '').replace(/\/sse.*$/, '')}/sse?since=1h`;
-      try {
-        es = new EventSource(sseEndpoint);
-        es.onmessage = (event) => {
-          try {
-            const item = JSON.parse(event.data);
-            if (item && item.message) {
-              const parsed = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
-              if (parsed && Array.isArray(parsed.teams)) {
-                setData((prev) => {
-                  const updated: LeaderboardResponse = {
-                    ...parsed,
-                    status: {
-                      ...parsed.status,
-                      onlinePlayers: prev.status.onlinePlayers,
-                      maxPlayers: prev.status.maxPlayers,
-                    },
-                  };
-                  try {
-                    localStorage.setItem('smp_last_leaderboard_data', JSON.stringify(updated));
-                  } catch (e) {}
-                  return updated;
-                });
-                setIsLive(true);
-              }
-            }
-          } catch (err) {}
-        };
-      } catch (err) {
-        console.warn("EventSource error:", err);
-      }
-    }
+  const q = searchQuery.trim().toLowerCase();
+  const filteredTeams = q
+    ? teams.filter(
+        (team) =>
+          team.name.toLowerCase().includes(q) ||
+          team.captainName.toLowerCase().includes(q) ||
+          team.members.some((m) => m.name.toLowerCase().includes(q)),
+      )
+    : teams;
 
-    // 3. Keep online player count fresh every 15 seconds
-    const interval = setInterval(() => {
-      fetchLiveLeaderboard();
-    }, 15000);
-
-    return () => {
-      clearInterval(interval);
-      if (es) es.close();
-    };
-  }, [apiUrl]);
-
-  const handleSaveApiUrl = (newUrl: string) => {
-    setApiUrl(newUrl);
-    localStorage.setItem('smp_api_url', newUrl);
-    fetchLiveLeaderboard(newUrl);
-  };
-
-  const handleLoadDemo = () => {
-    setData(mockLeaderboardData);
-    setIsLive(false);
-  };
-
-  const handleResetToDraft = () => {
-    setData(initialDraftState);
-    try {
-      localStorage.removeItem('smp_last_leaderboard_data');
-    } catch (e) {}
-    handleBroadcastTeams([], 'DRAFT');
-  };
-
-  // Filter teams by search
-  const teamsList = Array.isArray(data?.teams) ? data.teams : [];
-  const filteredTeams = teamsList.filter((team) => {
-    const matchesTeam = (team.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCaptain = (team.captainName || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMember = (team.members || []).some((m) =>
-      (m.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    return matchesTeam || matchesCaptain || matchesMember;
-  });
+  const selectedTeam = teams.find((t) => t.id === selectedTeamId) ?? null;
 
   return (
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950">
-      {/* Navigation */}
       <Navbar
-        status={data?.status || initialDraftState.status}
-        apiUrl={apiUrl}
-        isLive={isLive}
+        status={data.status}
+        feed={feed}
+        draftLive={!!draft && !isDemo}
         isRefreshing={isRefreshing}
         onRefresh={handleManualRefresh}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenInfo={() => setIsInfoOpen(true)}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Top Summary Badges */}
-        <StatsOverview status={data?.status || initialDraftState.status} />
+      {import.meta.env.DEV && (
+        <div className="bg-fuchsia-500/10 border-b border-fuchsia-500/30 text-fuchsia-200 text-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
+            Local test build · listening on <code className="font-mono">{NTFY_TOPIC}</code>
+          </div>
+        </div>
+      )}
 
-        {/* Podium for Top 3 */}
-        {!searchQuery && teamsList.length >= 3 && (
-          <Podium teams={teamsList} onSelectTeam={(team) => setSelectedTeam(team)} />
+      {isDemo && (
+        <div className="bg-sky-500/10 border-b border-sky-500/30 text-sky-200 text-xs sm:text-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-3">
+            <span>You&apos;re looking at made-up demo data, not the real standings.</span>
+            <button
+              onClick={() => setIsDemo(false)}
+              className="shrink-0 px-3 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 font-bold"
+            >
+              Show live
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isDemo && feed === 'stale' && lastUpdateAt && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-xs sm:text-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            Standings last updated {timeAgo(lastUpdateAt + clockSkewMs)}. They&apos;ll refresh automatically when the server sends new data.
+          </div>
+        </div>
+      )}
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
+        <StatsOverview
+          status={data.status}
+          poolCount={pool.length}
+          draftLive={!!draft}
+          serverOnline={isDemo ? true : mcStatus ? mcStatus.online : null}
+        />
+
+        {showDraft && (
+          <DraftCenter draft={draft} pool={pool} history={history} teams={teams} clockSkewMs={clockSkewMs} />
         )}
 
-        {/* Search Bar */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* During the draft everyone has the same credits, so the podium only means something afterwards. */}
+        {!q && teams.length >= 3 && data.status.phase !== 'DRAFT' && <Podium teams={teams} onSelectTeam={(team) => setSelectedTeamId(team.id)} />}
+
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
-              type="text"
+              type="search"
               placeholder="Search team or player name..."
+              aria-label="Search team or player name"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400/80 transition-colors"
             />
           </div>
-          <div className="text-xs text-slate-400 flex items-center gap-2">
-            <span>Showing {filteredTeams.length} of {data.teams.length} teams</span>
+          <div className="text-xs text-slate-400">
+            Showing {filteredTeams.length} of {teams.length} teams
           </div>
         </div>
 
-        {/* Squad Standings Table */}
         <LeaderboardTable
           teams={filteredTeams}
-          onSelectTeam={(team) => setSelectedTeam(team)}
-          selectedTeamId={selectedTeam?.id}
+          ranks={ranks}
+          totalTeams={teams.length}
+          isSearching={!!q}
+          onSelectTeam={(team) => setSelectedTeamId(team.id)}
+          selectedTeamId={selectedTeamId ?? undefined}
         />
 
-        {/* Rules & Tournament Mechanics Guide */}
         <RulesGuide />
       </main>
 
-      {/* Footer */}
       <footer className="mt-16 border-t border-slate-800/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
             <span className="font-bold text-slate-300">Willy Money SMP</span>
-            <span>— High-Stakes Minecraft Tournament Engine</span>
+            <span>— High-Stakes Minecraft Tournament</span>
           </div>
-          <div>
-            Powered by Paper 1.21+ • Real-Time Web Bridge
-          </div>
+          <div>{lastUpdateAt && !isDemo ? `Last update ${timeAgo(lastUpdateAt + clockSkewMs)}` : 'Paper 1.21+'}</div>
         </div>
       </footer>
 
-      {/* Modals */}
-      <TeamModal team={selectedTeam} onClose={() => setSelectedTeam(null)} />
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        apiUrl={apiUrl}
-        onSaveApiUrl={handleSaveApiUrl}
-        isLive={isLive}
-        onLoadDemo={handleLoadDemo}
-        onResetDraft={handleResetToDraft}
-        currentTeams={data.teams}
-        onBroadcastTeams={handleBroadcastTeams}
+      <TeamModal team={selectedTeam} onClose={() => setSelectedTeamId(null)} />
+      <ServerInfoModal
+        isOpen={isInfoOpen}
+        onClose={() => setIsInfoOpen(false)}
+        mcStatus={mcStatus}
+        mcChecked={mcChecked}
+        lastUpdateAt={lastUpdateAt ? lastUpdateAt + clockSkewMs : null}
+        isStale={isStale}
+        rejectedCount={rejectedCount}
+        syncError={syncError}
+        isDemo={isDemo}
+        onToggleDemo={() => setIsDemo((d) => !d)}
       />
     </div>
   );

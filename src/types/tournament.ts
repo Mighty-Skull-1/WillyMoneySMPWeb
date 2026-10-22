@@ -42,7 +42,36 @@ export interface TournamentStatus {
   lastUpdated: string;
 }
 
+/** The auction currently running in game (/bid nominate). */
+export interface DraftAuction {
+  nominee: string;
+  tier: PlayerTier;
+  bid: number;
+  bidder: string | null;
+  team: string | null;
+  /** Server time (ms) the auction closes. */
+  endsAt: number;
+  /** Auction length in seconds (the clock resets to this on every bid). */
+  length: number;
+  /** Every bid is exactly this much higher than the last. */
+  increment: number;
+}
+
+export interface DraftPick {
+  player: string;
+  team: string;
+  price: number;
+}
+
+export interface PoolPlayer {
+  name: string;
+  tier: PlayerTier;
+}
+
 export interface LeaderboardResponse {
   status: TournamentStatus;
   teams: TeamData[];
+  draft?: DraftAuction | null;
+  pool?: PoolPlayer[];
+  history?: DraftPick[];
 }

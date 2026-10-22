@@ -26,22 +26,30 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="p-4 sm:p-6 border-b border-slate-800 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4 min-w-0">
             <img
-              src={`https://mc-heads.net/avatar/${team.captainName}/64`}
+              src={`https://mc-heads.net/avatar/${encodeURIComponent(team.captainName)}/64`}
               alt={team.captainName}
               className="w-16 h-16 rounded-xl border-2 border-amber-400/50 bg-slate-800 shadow-lg"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = `https://mc-heads.net/avatar/MHF_Steve/64`;
               }}
             />
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-2xl font-black text-white">{team.name}</h3>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-black text-white truncate">{team.name}</h3>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   {team.totalCredits.toLocaleString()} Credits
                 </span>
@@ -56,7 +64,8 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            aria-label="Close"
+            className="shrink-0 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -76,9 +85,9 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <img
-                    src={`https://mc-heads.net/avatar/${member.name}/44`}
+                    src={`https://mc-heads.net/avatar/${encodeURIComponent(member.name)}/44`}
                     alt={member.name}
-                    className="w-11 h-11 rounded-lg border border-slate-700 bg-slate-800"
+                    className={`w-11 h-11 rounded-lg border border-slate-700 bg-slate-800 ${member.isEliminated ? 'grayscale opacity-60' : ''}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://mc-heads.net/avatar/MHF_Steve/44`;
                     }}
@@ -92,17 +101,26 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-base">{member.name}</span>
+                    <span className={`font-bold text-base ${member.isEliminated ? 'text-slate-400 line-through' : 'text-white'}`}>{member.name}</span>
                     {getTierBadge(member.tier)}
                   </div>
                   <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                    <span className="text-emerald-400 font-medium flex items-center gap-1">
-                      <Heart className="w-3 h-3" /> Active Combatant
-                    </span>
+                    {member.isEliminated ? (
+                      <span className="text-rose-400 font-medium flex items-center gap-1">
+                        <Skull className="w-3 h-3" /> Eliminated
+                      </span>
+                    ) : (
+                      <span className="text-emerald-400 font-medium flex items-center gap-1">
+                        <Heart className="w-3 h-3" /> Alive
+                      </span>
+                    )}
                     {member.kills !== undefined && (
                       <>
                         <span>•</span>
-                        <span className="text-slate-300 font-medium">{member.kills} Kills</span>
+                        <span className="text-slate-300 font-medium flex items-center gap-1">
+                          <Swords className="w-3 h-3" /> {member.kills} {member.kills === 1 ? 'kill' : 'kills'}
+                          {member.deaths ? ` · ${member.deaths} ${member.deaths === 1 ? 'death' : 'deaths'}` : ''}
+                        </span>
                       </>
                     )}
                   </div>
@@ -128,7 +146,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ team, onClose }) => {
         {/* Modal Footer / Quick Info */}
         <div className="p-4 bg-slate-950/80 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
           <span>Squad Size: <strong className="text-amber-400">{team.members.length} Players</strong></span>
-          <span className="text-slate-500">Auto-syncs with server</span>
+          <span className="text-slate-500">Updates live from the server</span>
         </div>
       </div>
     </div>
