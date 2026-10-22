@@ -51,7 +51,7 @@ export interface DraftAuction {
   team: string | null;
   /** Server time (ms) the auction closes. */
   endsAt: number;
-  /** Auction length in seconds (the clock resets to this on every bid). */
+  /** Auction length in seconds. */
   length: number;
   /** Every bid is exactly this much higher than the last. */
   increment: number;

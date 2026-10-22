@@ -63,7 +63,7 @@ export const DraftCenter: React.FC<DraftCenterProps> = ({ draft, pool, history, 
             <Gavel className="w-5 h-5 text-amber-400" /> LIVE DRAFT
           </h2>
           <p className="text-xs text-slate-400">
-            Captains type <code className="font-mono text-amber-400">/bid</code> to raise by {draft?.increment ?? 5}. Every bid resets the clock. One player per tier, per team.
+            Captains type <code className="font-mono text-amber-400">/bid</code> to raise by {draft?.increment ?? 5}. Top bid when the clock hits 0 wins. One player per tier, per team.
           </p>
         </div>
         {draft ? (
