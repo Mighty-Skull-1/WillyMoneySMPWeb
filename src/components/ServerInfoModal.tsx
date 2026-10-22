@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Server, Copy, Check, Radio, AlertTriangle, Eye, EyeOff } from 'lucide-react';
-import { MC_SERVER_HOST } from '../config';
 import type { McStatus } from '../lib/sync';
 
 interface ServerInfoModalProps {
@@ -8,6 +7,7 @@ interface ServerInfoModalProps {
   onClose: () => void;
   mcStatus: McStatus | null;
   mcChecked: boolean;
+  serverAddress: string;
   lastUpdateAt: number | null;
   isStale: boolean;
   rejectedCount: number;
@@ -33,6 +33,7 @@ export const ServerInfoModal: React.FC<ServerInfoModalProps> = ({
   onClose,
   mcStatus,
   mcChecked,
+  serverAddress,
   lastUpdateAt,
   isStale,
   rejectedCount,
@@ -45,7 +46,7 @@ export const ServerInfoModal: React.FC<ServerInfoModalProps> = ({
 
   const copyAddress = async () => {
     try {
-      await navigator.clipboard.writeText(MC_SERVER_HOST);
+      await navigator.clipboard.writeText(serverAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -92,7 +93,7 @@ export const ServerInfoModal: React.FC<ServerInfoModalProps> = ({
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Server address</div>
             <div className="flex items-center gap-2">
               <code className="flex-1 min-w-0 truncate px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 font-mono text-sm select-all">
-                {MC_SERVER_HOST}
+                {serverAddress}
               </code>
               <button
                 onClick={copyAddress}
@@ -166,6 +167,9 @@ export const ServerInfoModal: React.FC<ServerInfoModalProps> = ({
             </p>
             <p>
               <code className="text-amber-400 font-mono">/smp webkey</code> show the key this website must use
+            </p>
+            <p>
+              <code className="text-amber-400 font-mono">/smp setip &lt;address&gt;</code> change the server address shown here
             </p>
             <p>
               <code className="text-sky-400 font-mono">/team create &lt;name&gt; &lt;captain&gt;</code> ·{' '}

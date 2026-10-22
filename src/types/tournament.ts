@@ -74,4 +74,6 @@ export interface LeaderboardResponse {
   draft?: DraftAuction | null;
   pool?: PoolPlayer[];
   history?: DraftPick[];
+  /** Minecraft server address set in game with /smp setip (falls back to MC_SERVER_HOST). */
+  serverAddress?: string;
 }

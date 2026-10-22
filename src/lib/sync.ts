@@ -171,6 +171,7 @@ export function decodePayload(raw: any): LeaderboardResponse {
     draft,
     pool,
     history,
+    serverAddress: typeof raw.ip === 'string' && /^[A-Za-z0-9.:-]{3,100}$/.test(raw.ip) ? raw.ip : undefined,
   };
 }
 

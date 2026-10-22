@@ -118,15 +118,24 @@ export function App() {
     }
   }, [applyUpdate]);
 
+  // The address comes from the server (/smp setip); config.ts only has the fallback.
+  const serverAddress = live?.data.serverAddress || MC_SERVER_HOST;
+  const serverAddressRef = useRef(serverAddress);
+  serverAddressRef.current = serverAddress;
+
   const refreshServerPing = useCallback(async () => {
     if (!MC_PING_ENABLED) {
       setMcChecked(true);
       return;
     }
-    const status = await pingServer(MC_SERVER_HOST);
+    const status = await pingServer(serverAddressRef.current);
     if (status) setMcStatus(status);
     setMcChecked(true);
   }, []);
+
+  useEffect(() => {
+    if (serverAddress !== MC_SERVER_HOST) refreshServerPing();
+  }, [serverAddress, refreshServerPing]);
 
   useEffect(() => {
     loadLatest();
@@ -313,6 +322,7 @@ export function App() {
         onClose={() => setIsInfoOpen(false)}
         mcStatus={mcStatus}
         mcChecked={mcChecked}
+        serverAddress={serverAddress}
         lastUpdateAt={lastUpdateAt ? lastUpdateAt + clockSkewMs : null}
         isStale={isStale}
         rejectedCount={rejectedCount}
