@@ -165,7 +165,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <h4 className="font-bold text-white text-sm">Free Fall (Finale Showdown)</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              The world border closes in, forcing every team into the middle. Being outside the border hurts. Last team standing takes the crown!
+              The world border closes in, forcing every team into the middle. Permadeath: die and you are out for good. When it ends, the team on top of the leaderboard wins!
             </p>
           </div>
         </div>
