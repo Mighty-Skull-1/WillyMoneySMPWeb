@@ -27,7 +27,7 @@ export const NTFY_TOPIC: string = env.VITE_NTFY_TOPIC || (DEV ? TEST_NTFY_TOPIC 
  */
 export const SIGNING_PUBLIC_KEY: string =
   env.VITE_SIGNING_PUBLIC_KEY ||
-  'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE5o45oKAbuBsDCsrIwrFnG5YnMmx2DvmhW7V3hEHzLRMi7TQnLuk9f4/RJF/BGjZQ018u4FrMn4C8ULS9VmCatg==';
+  'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDhGx5z+/NSTR4fSDtmG9k9qHw94+a8qK5VtL0FjDlCMkrJ0AOHK68HuanOckfV0/SW0g0lKC5AI5UITaAjXFqA==';
 
 /**
  * Admin password for the "Join Server" panel. Only a salted PBKDF2-SHA256 hash is stored here.
