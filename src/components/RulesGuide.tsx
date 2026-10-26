@@ -15,7 +15,7 @@ interface RulesGuideProps {
 
 export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
   const bannedList = banned ?? DEFAULT_BANNED;
-  const [activeTab, setActiveTab] = useState<'banned' | 'events' | 'currencies'>('currencies');
+  const [activeTab, setActiveTab] = useState<'rules' | 'banned' | 'events' | 'currencies'>('rules');
 
   return (
     <div className="mt-12 bg-slate-900/60 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
@@ -33,7 +33,17 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 w-fit">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 w-fit">
+          <button
+            onClick={() => setActiveTab('rules')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'rules'
+                ? 'bg-amber-500 text-slate-950'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Server Rules
+          </button>
           <button
             onClick={() => setActiveTab('currencies')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -66,6 +76,53 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
           </button>
         </div>
       </div>
+
+      {/* Server rules */}
+      {activeTab === 'rules' && (
+        <div>
+          <div className="mb-4 p-4 rounded-xl bg-rose-950/30 border border-rose-900/50 text-sm text-rose-200 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-none text-rose-400" />
+            <span><strong>Breaking a rule = a fine.</strong> Fines take a portion of your team&apos;s money, so one person breaking the rules costs the whole team.</span>
+          </div>
+          <ol className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">1</span>
+              <div>
+                <h4 className="font-bold text-white text-sm">No unfair advantages</h4>
+                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">No mods or clients that give you an edge — health indicators, player trackers, minimaps and similar are all banned.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">2</span>
+              <div>
+                <h4 className="font-bold text-white text-sm">No stream sniping</h4>
+                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">Do not use anyone's stream to find or track them. Even being suspected of stream sniping can get your team fined, so take this seriously.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">3</span>
+              <div>
+                <h4 className="font-bold text-white text-sm">No TNT traps or TNT in PvP</h4>
+                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">TNT cannot be used to trap players or as a weapon in fights.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">4</span>
+              <div>
+                <h4 className="font-bold text-white text-sm">Use common sense</h4>
+                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">No loopholes and no exploits. If it feels like it breaks the spirit of the game, don't do it.</p>
+              </div>
+            </li>
+            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">5</span>
+              <div>
+                <h4 className="font-bold text-white text-sm">No cross-team cheating</h4>
+                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">Teams working together unfairly or helping another team cheat will be fined.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      )}
 
       {/* Tab 1: Currencies */}
       {activeTab === 'currencies' && (
