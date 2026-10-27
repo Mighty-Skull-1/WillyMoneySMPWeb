@@ -8,6 +8,32 @@ const DEFAULT_BANNED: BannedItem[] = [
   { name: 'Wind Charge', reason: 'Wind Charges are disabled for competitive tournament balance', alternative: 'None / Standard Movement' },
 ];
 
+interface ServerRule {
+  title: string;
+  detail?: string;
+  /** Green "allowed" card: something players might assume is banned but isn't. */
+  allowed?: boolean;
+}
+
+// Keep in sync with the "Server Rules" list in public/guide.html.
+const SERVER_RULES: ServerRule[] = [
+  { title: 'No unfair advantages', detail: 'No mods or clients that give you an edge — health indicators, player trackers, minimaps and similar are all banned.' },
+  { title: 'No stream sniping', detail: "Do not use anyone's stream to find or track them. Even being suspected of stream sniping can get your team fined, so take this seriously." },
+  { title: 'No TNT traps or TNT in PvP', detail: 'TNT cannot be used to trap players or as a weapon in fights.' },
+  { title: 'Use common sense', detail: "No loopholes and no exploits. If it feels like it breaks the spirit of the game, don't do it." },
+  { title: 'No cross-team cheating', detail: 'Teams working together unfairly or helping another team cheat will be fined.' },
+  { title: 'No draining' },
+  { title: 'No ice or sponges', detail: 'Ice and sponges cannot be used.' },
+  { title: 'No debuffs', detail: 'Do not use debuff potions or effects on other players.' },
+  { title: 'No spectral arrows' },
+  { title: 'No Thorns', detail: 'The Thorns enchantment is not allowed.' },
+  { title: 'Naked kills: once only', detail: "You can kill someone with no gear, but after that you can't kill them again until they're geared up. Don't try to loophole this rule." },
+  { title: '50-minute grace period', detail: 'You get 50 minutes of grace from the first time you log on, and again every time you die.' },
+  { title: 'Lava is allowed', allowed: true },
+  { title: 'AFK killing is allowed', allowed: true },
+  { title: 'Base griefing and stealing are allowed', detail: "You can grief other people's bases and steal from them.", allowed: true },
+];
+
 interface RulesGuideProps {
   /** Live list from the server (/banneditems). Undefined until the server sends it. */
   banned?: BannedItem[];
@@ -85,41 +111,31 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
             <span><strong>Breaking a rule = a fine.</strong> Fines take a portion of your team&apos;s money, so one person breaking the rules costs the whole team.</span>
           </div>
           <ol className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">1</span>
-              <div>
-                <h4 className="font-bold text-white text-sm">No unfair advantages</h4>
-                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">No mods or clients that give you an edge — health indicators, player trackers, minimaps and similar are all banned.</p>
-              </div>
-            </li>
-            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">2</span>
-              <div>
-                <h4 className="font-bold text-white text-sm">No stream sniping</h4>
-                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">Do not use anyone's stream to find or track them. Even being suspected of stream sniping can get your team fined, so take this seriously.</p>
-              </div>
-            </li>
-            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">3</span>
-              <div>
-                <h4 className="font-bold text-white text-sm">No TNT traps or TNT in PvP</h4>
-                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">TNT cannot be used to trap players or as a weapon in fights.</p>
-              </div>
-            </li>
-            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">4</span>
-              <div>
-                <h4 className="font-bold text-white text-sm">Use common sense</h4>
-                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">No loopholes and no exploits. If it feels like it breaks the spirit of the game, don't do it.</p>
-              </div>
-            </li>
-            <li className="flex gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-              <span className="flex-none w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 text-sm font-black flex items-center justify-center">5</span>
-              <div>
-                <h4 className="font-bold text-white text-sm">No cross-team cheating</h4>
-                <p className="text-xs text-slate-300 leading-relaxed mt-0.5">Teams working together unfairly or helping another team cheat will be fined.</p>
-              </div>
-            </li>
+            {SERVER_RULES.map((rule, i) => (
+              <li
+                key={rule.title}
+                className={`flex gap-3 p-4 rounded-xl border ${
+                  rule.allowed ? 'bg-emerald-950/20 border-emerald-900/40' : 'bg-slate-950/60 border-slate-800'
+                }`}
+              >
+                <span
+                  className={`flex-none w-7 h-7 rounded-lg text-sm font-black flex items-center justify-center ${
+                    rule.allowed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <div>
+                  <h4 className="font-bold text-white text-sm flex items-center gap-2">
+                    {rule.title}
+                    {rule.allowed && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">ALLOWED</span>
+                    )}
+                  </h4>
+                  {rule.detail && <p className="text-xs text-slate-300 leading-relaxed mt-0.5">{rule.detail}</p>}
+                </div>
+              </li>
+            ))}
           </ol>
         </div>
       )}
