@@ -223,6 +223,7 @@
       <li><strong>No TNT traps or TNT in PvP.</strong> TNT cannot be used to trap players or as a weapon in fights.</li>
       <li><strong>Use common sense.</strong> No loopholes and no exploits. If it feels like it breaks the spirit of the game, don&#39;t do it.</li>
       <li><strong>No cross-team cheating.</strong> Teams working together unfairly or helping another team cheat will be fined.</li>
+      <li><strong>FFA: no focusing one team.</strong> In the Free For All you can fight whoever you want, but you cannot target one team for the whole FFA. Doing it gets a fine.</li>
       <li><strong>No draining.</strong></li>
       <li><strong>No ice or sponges.</strong> Ice and sponges cannot be used.</li>
       <li><strong>No debuffs.</strong> Do not use debuff potions or effects on other players.</li>
@@ -256,7 +257,7 @@
                 <td><strong>Game Credits</strong></td>
                 <td>All Players</td>
                 <td>Used to rank teams on the tournament leaderboard.</td>
-                <td>Earned via <strong>Kills</strong>, winning <strong>KOTH</strong>, looting <strong>Airdrops</strong>, and placing in <strong>Bingo</strong>.</td>
+                <td>Earned via <strong>Kills</strong>, winning <strong>KOTH</strong>, placing in the <strong>FFA</strong>, looting <strong>Airdrops</strong>, and placing in <strong>Bingo</strong>.</td>
             </tr>
         </tbody>
     </table>
@@ -288,7 +289,7 @@
             <span class="phase-badge badge-finale">Phase 4</span>
             <h3>👑 Finale Showdown: Free Fall</h3>
             <p><strong>PvP Status:</strong> Full Combat. <strong>Permadeath</strong> - die and you spectate for the rest of the tournament.</p>
-            <p>The world border closes in (default 1000 → 50 blocks over 20 minutes), forcing every team into the middle. Being outside the border hurts. A team stays in while any player is alive. When a team&#39;s last player is knocked out they lock in their place (first team out finishes last), and the last team standing wins!</p>
+            <p>The world border closes in (default 1000 → 50 blocks over 20 minutes), forcing every team into the middle. Being outside the border hurts. When an admin runs <code>/freefall end</code>, the team on top of the leaderboard (most Game Credits) wins!</p>
             <code>/freefall start</code>
         </div>
     </div>
@@ -316,7 +317,14 @@
         <p>A 5-block particle flame ring appears with a floating 5-minute holographic timer. Everyone on a team gets a Knockback II wooden sword that breaks after about 5 hits. Teams holding the zone without enemies inside score capture points. If rival teams enter, the hill is marked <strong>CONTESTED</strong>. When the timer ends, the teams that held it longest win: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25 Game Credits</strong>, paid to each Captain.</p>
     </div>
 
-    <h3>2. 🪂 Proximity Airdrops</h3>
+    <h3>2. ⚔️ Free For All (FFA)</h3>
+    <div class="card">
+        <p><strong>How to Start:</strong> <code>/ffa start</code> (PvP phase). Everyone on a team who is online joins.</p>
+        <p>Die and you are out of the FFA: you spectate until it ends, then you are put back in the game. Nothing else in the tournament is reset. When everyone on a team is out, that team is out - the first team out finishes <strong>5th</strong>, the next <strong>4th</strong>, and so on. The last team with a player standing wins. Rewards: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25 Game Credits</strong>, paid to each Captain.</p>
+        <p>Fight whoever you want, but <strong>no focusing one team for the whole FFA</strong> - that gets a fine. Logging out during the FFA counts as being knocked out.</p>
+    </div>
+
+    <h3>3. 🪂 Proximity Airdrops</h3>
     <div class="card">
         <p><strong>How to Summon:</strong> <code>/airdrop random &lt;common|rare|legendary&gt;</code> or click airdrop buttons in <code>/smp</code>.</p>
         <p>Supply crates parachute from the sky 50–130m near an active player, leaving a smoke beacon signal on impact. Chests are filled with randomized distinct gear and grant instant credits on claim:</p>
@@ -327,7 +335,7 @@
         </ul>
     </div>
 
-    <h3>3. 🧩 Lockout Bingo</h3>
+    <h3>4. 🧩 Lockout Bingo</h3>
     <div class="card">
         <p><strong>How to Start:</strong> <code>/bingo start</code>. View board with <code>/bingo</code>.</p>
         <p>An interactive 5x5 board featuring 25 survival tasks (e.g., <em>Mine Ancient Debris, Tame a Cat, Craft Beacon, Brew Invisibility</em>). When a team completes a task, it turns into that team's wool color and is <strong>locked out</strong> from everyone else.</p>
@@ -382,7 +390,8 @@
             <tr><td><code>/bid nominate &lt;player&gt;</code></td><td>Admins</td><td>Starts a 30s auction for an unassigned player.</td></tr>
             <tr><td><code>/bid</code></td><td>Captains</td><td>Raises the top bid on the active draft player by 5.</td></tr>
             <tr><td><code>/koth start</code> / <code>stop</code></td><td>Admins</td><td>Starts or stops King of the Hill at your position.</td></tr>
-            <tr><td><code>/freefall start</code></td><td>Admins</td><td>Finale: shrinks the world border (also <code>center</code>, <code>status</code>, <code>stop</code>, <code>standings</code>, <code>out</code>, <code>end</code>, <code>reset</code>).</td></tr>
+            <tr><td><code>/ffa start</code></td><td>Admins</td><td>Free For All event, last team standing wins (also <code>status</code>, <code>out &lt;player&gt;</code>, <code>end</code>, <code>stop</code>).</td></tr>
+            <tr><td><code>/freefall start</code></td><td>Admins</td><td>Finale: shrinks the world border (also <code>center</code>, <code>status</code>, <code>stop</code>, <code>end</code>, <code>reset</code>).</td></tr>
             <tr><td><code>/airdrop random &lt;tier&gt;</code></td><td>Admins</td><td>Spawns a proximity airdrop near a player.</td></tr>
         </tbody>
     </table>

@@ -22,6 +22,7 @@ const SERVER_RULES: ServerRule[] = [
   { title: 'No TNT traps or TNT in PvP', detail: 'TNT cannot be used to trap players or as a weapon in fights.' },
   { title: 'Use common sense', detail: "No loopholes and no exploits. If it feels like it breaks the spirit of the game, don't do it." },
   { title: 'No cross-team cheating', detail: 'Teams working together unfairly or helping another team cheat will be fined.' },
+  { title: 'FFA: no focusing one team', detail: 'In the Free For All you can fight whoever you want, but you cannot target one team for the whole FFA. Doing it gets a fine.' },
   { title: 'No draining' },
   { title: 'No ice or sponges', detail: 'Ice and sponges cannot be used.' },
   { title: 'No debuffs', detail: 'Do not use debuff potions or effects on other players.' },
@@ -162,7 +163,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Primary Economy</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Earned from Player Kills (+10 to +25), placing in KOTH (up to +125), opening Airdrops, and placing in Bingo (up to +150). Determines final team standings on the leaderboard!
+              Earned from Player Kills (+10 to +25), placing in KOTH (up to +125), placing in the FFA (up to +125), opening Airdrops, and placing in Bingo (up to +150). Determines final team standings on the leaderboard!
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
               Command: /leaderboard (Ranks squads by Game Credits)
@@ -214,6 +215,16 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
 
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
             <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-orange-400" />
+              <h4 className="font-bold text-white text-sm">Free For All (FFA)</h4>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              A PvP event where every team fights. Die and you are out of the FFA (you spectate until it ends, then you are back in the game). When everyone on your team is out, your team is out: the first team out finishes 5th, the next 4th, and the last team standing wins. <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25</strong> Game Credits. Fight whoever you want, but <strong>no focusing one team the whole FFA</strong> (fine). Logging out counts as being knocked out.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
+            <div className="flex items-center gap-2 mb-2">
               <Gift className="w-4 h-4 text-amber-400" />
               <h4 className="font-bold text-white text-sm">Proximity Airdrops</h4>
             </div>
@@ -238,7 +249,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <h4 className="font-bold text-white text-sm">Free Fall (Finale Showdown)</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              The world border closes in, forcing every team into the middle. Permadeath: die and you are out for good. A team stays in while anyone is still alive. Teams are placed by when they get wiped out (first out = last place), and the last team standing wins!
+              The world border closes in, forcing every team into the middle. Permadeath: die and you are out for good. When it ends, the team on top of the leaderboard wins!
             </p>
           </div>
         </div>
