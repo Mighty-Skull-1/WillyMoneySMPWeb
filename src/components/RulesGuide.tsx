@@ -162,7 +162,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Primary Economy</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-3">
-              Earned from Player Kills (+10 to +25), placing in KOTH (up to +100), opening Airdrops, and placing in Bingo (up to +150). Determines final team standings on the leaderboard!
+              Earned from Player Kills (+10 to +25), placing in KOTH (up to +125), opening Airdrops, and placing in Bingo (up to +150). Determines final team standings on the leaderboard!
             </p>
             <div className="text-[11px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800">
               Command: /leaderboard (Ranks squads by Game Credits)
@@ -208,7 +208,7 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
               <h4 className="font-bold text-white text-sm">King of the Hill (KOTH)</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              A 5-block flame ring appears for 180s. Teams that hold it longest win: <strong>1st +100</strong>, <strong>2nd +50</strong>, <strong>3rd +25</strong> Game Credits.
+              A 5-block flame ring appears for 5 minutes and everyone gets a Knockback II wooden sword (breaks after about 5 hits). Teams that hold it longest win: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25</strong> Game Credits.
             </p>
           </div>
 
