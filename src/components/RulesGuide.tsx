@@ -215,16 +215,6 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
 
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-orange-400" />
-              <h4 className="font-bold text-white text-sm">Team Deathmatch</h4>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Every team fights. Die and you are out of the deathmatch (you spectate until it ends, then you are back in the game). When everyone on your team is out, your team is out: first team out finishes 5th, the last team standing wins. Placings: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25</strong>. Every kill is worth <strong>+20 more</strong> than usual, and every 4 minutes a <strong>bounty tier</strong> (Captains → C → A → B) glows and is worth another <strong>+20</strong>. Fight whoever you want, but <strong>no focusing one team the whole deathmatch</strong> (fine). Logging out counts as being knocked out.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-            <div className="flex items-center gap-2 mb-2">
               <Gift className="w-4 h-4 text-amber-400" />
               <h4 className="font-bold text-white text-sm">Proximity Airdrops</h4>
             </div>
@@ -245,11 +235,11 @@ export const RulesGuide: React.FC<RulesGuideProps> = ({ banned }) => {
 
           <div className="p-4 rounded-xl bg-rose-950/20 border border-rose-900/40">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              <h4 className="font-bold text-white text-sm">Free Fall (Finale Showdown)</h4>
+              <Sparkles className="w-4 h-4 text-orange-400" />
+              <h4 className="font-bold text-white text-sm">Final Fight: Team Deathmatch</h4>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              The world border closes in, forcing every team into the middle. Permadeath: die and you are out for good. When it ends, the team on top of the leaderboard wins!
+              The last event of the tournament: every team fights. Die and you are out of the deathmatch (you spectate until it ends, then you are back in the game). When everyone on your team is out, your team is out: first team out finishes 5th, the last team standing wins. Placings: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25</strong>. Every kill is worth <strong>+20 more</strong> than usual, and every 4 minutes a <strong>bounty tier</strong> (Captains → C → A → B) glows and is worth another <strong>+20</strong>. Fight whoever you want, but <strong>no focusing one team the whole deathmatch</strong> (fine). Logging out counts as being knocked out. When it ends, the team with the most Game Credits on the leaderboard wins Willy Money SMP!
             </p>
           </div>
         </div>

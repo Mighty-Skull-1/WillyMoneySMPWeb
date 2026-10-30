@@ -213,7 +213,7 @@
     </header>
 
     <h2>📖 Tournament Overview</h2>
-    <p><strong>Willy Money SMP</strong> is a high-stakes, team-based Minecraft competitive engine. Players are classified into skill tiers, auctioned in live Captains' draft bidding, build bases during a grace period, battle in custom events, and fight to the death with permadeath elimination in the Finale.</p>
+    <p><strong>Willy Money SMP</strong> is a high-stakes, team-based Minecraft competitive engine. Players are classified into skill tiers, auctioned in live Captains' draft bidding, build bases during a grace period, battle in custom events, and and finish with a Team Deathmatch final fight.</p>
 
     <h2>📜 Server Rules</h2>
     <p><strong>Breaking a rule = a fine.</strong> Fines take a portion of your team&#39;s money, so one person breaking the rules costs the whole team.</p>
@@ -287,10 +287,10 @@
         </div>
         <div class="card">
             <span class="phase-badge badge-finale">Phase 4</span>
-            <h3>👑 Finale Showdown: Free Fall</h3>
-            <p><strong>PvP Status:</strong> Full Combat. <strong>Permadeath</strong> - die and you spectate for the rest of the tournament.</p>
-            <p>The world border closes in (default 1000 → 50 blocks over 20 minutes), forcing every team into the middle. Being outside the border hurts. When an admin runs <code>/freefall end</code>, the team on top of the leaderboard (most Game Credits) wins!</p>
-            <code>/freefall start</code>
+            <h3>👑 Final Fight: Team Deathmatch</h3>
+            <p><strong>PvP Status:</strong> Full Combat. Die and you are out of the deathmatch (you spectate until it ends).</p>
+            <p>Every team fights until one team is left. Teams are placed by when they get wiped out and paid for their placing, kills are worth extra, and a glowing bounty tier changes every 4 minutes (full rules under Live Tournament Events). When it ends, the team on top of the leaderboard (most Game Credits) wins Willy Money SMP!</p>
+            <code>/tdm start</code>
         </div>
     </div>
 
@@ -317,12 +317,13 @@
         <p>A 5-block particle flame ring appears with a floating 5-minute holographic timer. Everyone on a team gets a Knockback II wooden sword that breaks after about 5 hits. Teams holding the zone without enemies inside score capture points. If rival teams enter, the hill is marked <strong>CONTESTED</strong>. When the timer ends, the teams that held it longest win: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25 Game Credits</strong>, paid to each Captain.</p>
     </div>
 
-    <h3>2. ⚔️ Team Deathmatch</h3>
+    <h3>2. ⚔️ Final Fight: Team Deathmatch</h3>
     <div class="card">
-        <p><strong>How to Start:</strong> <code>/tdm start</code> (or <code>/ffa start</code>) in the PvP phase. Everyone on a team who is online joins.</p>
+        <p><strong>How to Start:</strong> <code>/tdm start</code> (or <code>/ffa start</code>). This is the last event: it switches the server to the Finale phase. Everyone on a team who is online joins.</p>
         <p>Die and you are out of the deathmatch: you spectate until it ends, then you are put back in the game. Nothing else in the tournament is reset. When everyone on a team is out, that team is out - the first team out finishes <strong>5th</strong>, the next <strong>4th</strong>, and so on. The last team with a player standing wins. Placings: <strong>1st +125</strong>, <strong>2nd +100</strong>, <strong>3rd +75</strong>, <strong>4th +50</strong>, <strong>5th +25 Game Credits</strong>, paid to each Captain.</p>
         <p><strong>Kill money:</strong> every kill is worth <strong>+20 more</strong> than usual (Captain 45, Tier A 35, Tier B/C 30). Every 4 minutes a <strong>bounty tier</strong> is picked in the order Captains → Tier C → Tier A → Tier B: those players glow and killing them pays another <strong>+20</strong>.</p>
         <p>Fight whoever you want, but <strong>no focusing one team for the whole deathmatch</strong> - that gets a fine. Logging out during the deathmatch counts as being knocked out.</p>
+        <p><strong>Winner:</strong> after the placings are paid, the team with the most Game Credits wins the tournament.</p>
     </div>
 
     <h3>3. 🪂 Proximity Airdrops</h3>
@@ -391,8 +392,8 @@
             <tr><td><code>/bid nominate &lt;player&gt;</code></td><td>Admins</td><td>Starts a 30s auction for an unassigned player.</td></tr>
             <tr><td><code>/bid</code></td><td>Captains</td><td>Raises the top bid on the active draft player by 5.</td></tr>
             <tr><td><code>/koth start</code> / <code>stop</code></td><td>Admins</td><td>Starts or stops King of the Hill at your position.</td></tr>
-            <tr><td><code>/tdm start</code></td><td>Admins</td><td>Team Deathmatch, bounty tier glows, last team standing wins (also <code>status</code>, <code>out &lt;player&gt;</code>, <code>end</code>, <code>stop</code>).</td></tr>
-            <tr><td><code>/freefall start</code></td><td>Admins</td><td>Finale: shrinks the world border (also <code>center</code>, <code>status</code>, <code>stop</code>, <code>end</code>, <code>reset</code>).</td></tr>
+            <tr><td><code>/tdm start</code></td><td>Admins</td><td>Final fight: Team Deathmatch, bounty tier glows, then the winner is crowned; last team standing wins (also <code>status</code>, <code>out &lt;player&gt;</code>, <code>end</code>, <code>stop</code>).</td></tr>
+            <tr><td><code>/freefall start</code></td><td>Admins</td><td>Optional: shrinks the world border to push teams together (also <code>center</code>, <code>status</code>, <code>stop</code>, <code>end</code>, <code>reset</code>).</td></tr>
             <tr><td><code>/airdrop random &lt;tier&gt;</code></td><td>Admins</td><td>Spawns a proximity airdrop near a player.</td></tr>
         </tbody>
     </table>
